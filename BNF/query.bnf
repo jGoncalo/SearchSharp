@@ -8,8 +8,6 @@
 	| [0-9]+
 <num> ::= <float> | <int>
 
-<whitespace> ::= " "
-
 <str> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""
 	
@@ -29,11 +27,10 @@
 <exp> ::= "(" <exp> ")"
 	| <nexp>
     | <bexp>
-    | <dir>
-    
-<nexp> ::= "!" <exp>
+    | <dirExp>
 
+<dirExp> ::= <dir>   
+<nexp> ::= "!" <exp>
 <bexp> ::= <exp> <bop> <exp>
 
-<query> ::= <strexp>
-	| <exp>
+<query> ::= <strexp> | <exp>

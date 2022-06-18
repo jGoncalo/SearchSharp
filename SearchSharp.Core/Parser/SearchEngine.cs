@@ -3,13 +3,18 @@ namespace SearchSharp.Core.Parser;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using SearchSharp.Core.Items;
-using BinExpression = SearchSharp.Core.Items.BinaryExpression;
+using SearchSharp.Core.Items.Expressions;
+using Sprache;
+using LinqExp = System.Linq.Expressions.Expression;
+using SearchExp = SearchSharp.Core.Items.Expressions.Expression;
 
 public class SearchEngine<TQueryData> 
     where TQueryData : class {
-    public interface IAnalyzer {
-        Expression<Func<TQueryData, bool>> AnalyzeDirective(QueryDirective directive);
-        Expression<Func<TQueryData, bool>> AnalyzeLiteral(QueryLiteral literal);
+    public interface IEvaluator {
+        Expression<Func<TQueryData, bool>> Evaluate(SpecDirective directive);
+        Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
+        Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive);
+        Expression<Func<TQueryData, bool>> Evaluate(string textQuery);
     }
     public interface IDataProvider {
         string Name { get; }
@@ -18,10 +23,10 @@ public class SearchEngine<TQueryData>
         IQueryable<TQueryData> DataSource();
     }
 
-    private readonly IAnalyzer _analyzer;
+    private readonly IEvaluator _analyzer;
     private readonly Dictionary<string, IDataProvider> _dataProviders = new();
 
-    public SearchEngine(IAnalyzer analyzer){
+    public SearchEngine(IEvaluator analyzer){
         _analyzer = analyzer;
     }
 
@@ -45,68 +50,77 @@ public class SearchEngine<TQueryData>
         if(!foundProvider || provider == null) throw new Exception($"Data provider \"{dataProvider}\" not registred");
 
         try{
-            var queryLambda = QueryToExpression(query);
+            var queryLambda = FromQuery(query);
             return provider.DataSource().Where(queryLambda);
         }
-        catch(Exception exp){
+        catch{ 
             //TODO: add info to thrown
             throw;
         }
     }
 
-    private Expression<Func<TQueryData, bool>> QueryToExpression(string query) {
-        var couldParse = QueryParser.TryParse(query, out var errReason, out var parsedQuery);
-        if(!couldParse) throw new Exception(errReason);
+    private Expression<Func<TQueryData, bool>> FromQuery(string query) {
+        var result = QueryParser.Query.TryParse(query);
+        if(!result.WasSuccessful) throw new Exception(result.Message);
 
-        if(parsedQuery is QueryLiteral literal){
-            return _analyzer.AnalyzeLiteral(literal);
-        }
-        else if(parsedQuery is QueryExpression expression) {
-            return FromExpression(expression);
-        }
-        else throw new Exception($"unexpected parsedQuery type: {parsedQuery.GetType().Name}");
+        return result.Value.Root switch {
+            ComputeExpression compute => FromExpression(compute),
+            StringExpression @string => FromExpression(@string),
+
+            _ => throw new Exception($"Unexpected query expression type: {result.Value.Root.GetType().Name}")
+        };
     }
 
-    private Expression<Func<TQueryData, bool>> FromExpression(QueryExpression exp){
+    private Expression<Func<TQueryData, bool>> FromExpression(StringExpression exp){
+        return _analyzer.Evaluate(exp.Value);
+    }
+    private Expression<Func<TQueryData, bool>> FromExpression(ComputeExpression exp){
         return exp switch {
-            DirectiveExpression dir => FromDirectiveExpression(dir),
-            NegateExpression neg => FromNegativeExpression(neg),
-            BinExpression bin => FromBinaryExpression(bin),
-            QueryExpression => FromExpression(exp),
+            LogicExpression logic => FromExpression(logic),
+            NegatedExpression neg => FromExpression(neg),
+            DirectiveExpression dir => FromExpression(dir),
+            SearchExp => FromExpression(exp),
 
             _ => throw new Exception($"Unexpected query expression type: {exp.GetType().Name}")
         };
     }
-    private Expression<Func<TQueryData, bool>> FromBinaryExpression(BinExpression exp){
+    private Expression<Func<TQueryData, bool>> FromExpression(LogicExpression exp){
         var leftLambda = FromExpression(exp.Left);
         var rightLambda = FromExpression(exp.Right);
 
-        Expression composedLambda = exp.OpType switch 
+        var composedLambda = exp.Operator switch 
         {
-            BinaryOperationType.Or => Expression.Or(leftLambda, rightLambda),
-            BinaryOperationType.And => Expression.Add(leftLambda, rightLambda),
-            _ => throw new Exception($"unexpected OperationType value: {exp.OpType}")
+            LogicOperator.Or => LinqExp.Or(leftLambda, rightLambda),
+            LogicOperator.And => LinqExp.Add(leftLambda, rightLambda),
+            _ => throw new Exception($"unexpected OperationType value: {exp.Operator}")
         };
 
-        var argExpression = Expression.Parameter(typeof(TQueryData));
-        return Expression.Lambda<Func<TQueryData, bool>>(composedLambda, 
-            $"{leftLambda.Name}|{rightLambda.Name}", new [] {argExpression});
+        var argExpression = LinqExp.Parameter(typeof(TQueryData));
+        return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda, 
+            $"Logic[{leftLambda.Name}_{exp.Operator}_{rightLambda.Name}", new [] {argExpression});
     }
-    private Expression<Func<TQueryData, bool>> FromNegativeExpression(NegateExpression exp){
-        if(exp.Child == null) throw new Exception("Unexpected negative expression with null child");
-        var lambdaExpression = FromExpression(exp.Child);
+    private Expression<Func<TQueryData, bool>> FromExpression(NegatedExpression exp){
+        if(exp.Negated == null) throw new Exception("Unexpected negative expression with null child");
+        var lambdaExpression = FromExpression(exp.Negated);
 
-        var composedLambda = Expression.Not(lambdaExpression);
-        var argExpression = Expression.Parameter(typeof(TQueryData));
+        var composedLambda = LinqExp.Not(lambdaExpression);
+        var argExpression = LinqExp.Parameter(typeof(TQueryData));
 
-        return Expression.Lambda<Func<TQueryData, bool>>(composedLambda,
-            $"!{lambdaExpression.Name}", new [] {argExpression});
+        return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda,
+            $"Not[{lambdaExpression.Name}]", new [] {argExpression});
     }
-    private Expression<Func<TQueryData, bool>> FromDirectiveExpression(DirectiveExpression exp){
-        var lambdaExpression = _analyzer.AnalyzeDirective(exp.Directive);
-        var argExpression = Expression.Parameter(typeof(TQueryData));
+    private Expression<Func<TQueryData, bool>> FromExpression(DirectiveExpression exp){
+        var lambdaExpression = exp.Directive switch {
+            SpecDirective spec => _analyzer.Evaluate(spec),
+            NumericDirective num => _analyzer.Evaluate(num),
+            RangeDirective range => _analyzer.Evaluate(range),
+            
+            _ => throw new Exception($"Unexpected directive type: {exp.Directive.GetType().Name}")
+        };
 
-        return Expression.Lambda<Func<TQueryData, bool>>(lambdaExpression, 
-            $"dir[{exp.Directive.Identifier}]=>{exp.Directive.Value}", new [] {argExpression});
+        var argExpression = LinqExp.Parameter(typeof(TQueryData));
+
+        return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression, 
+            $"Directive[{exp.Directive.Type}->{exp.Directive.Identifier}]", new [] {argExpression});
     }
 }

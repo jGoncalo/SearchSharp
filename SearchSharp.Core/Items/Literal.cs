@@ -1,6 +1,6 @@
 namespace SearchSharp.Core.Items;
 
-public abstract class Literal : Item {
+public abstract class Literal : QueryItem {
     public readonly string RawValue;
     public readonly LiteralType Type;
 

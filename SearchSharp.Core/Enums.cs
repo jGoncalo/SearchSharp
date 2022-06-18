@@ -6,9 +6,10 @@ public enum LiteralType {
 }
 
 public enum ExpressionType {
-    Negate = 0,
+    String = 0,
     Directive = 1,
-    BinaryOperation = 2
+    Negated = 2,
+    Logic = 3
 }
 
 public enum DirectiveType {
@@ -28,7 +29,7 @@ public enum DirectiveNumericOperator {
     LesserOrEqual = 3,     //<=
 }
 
-public enum BinaryOperationType {
+public enum LogicOperator {
     Or = 0,
     And = 1
 }

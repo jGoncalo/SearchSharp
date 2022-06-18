@@ -1,6 +1,6 @@
 namespace SearchSharp.Core.Items;
 
-public abstract class Directive : Item {
+public abstract class Directive : QueryItem {
     public readonly DirectiveType Type;
     public readonly string Identifier;
 

@@ -9,11 +9,11 @@ using System.Text.RegularExpressions;
 public class ParserTests
 {
     [Fact]
-    public void VarParser()
+    public void IdentifierParser()
     {
         var text = "text";
         
-        var output = QueryParser.Var.TryParse(text);
+        var output = QueryParser.Identifier.TryParse(text);
 
         Assert.True(output.WasSuccessful);
         Assert.Equal(text, output.Value);

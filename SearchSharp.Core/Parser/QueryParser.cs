@@ -1,7 +1,7 @@
 namespace SearchSharp.Core.Parser;
 
 using SearchSharp.Core.Items;
-using System.Collections.Generic;
+using SearchSharp.Core.Items.Expressions;
 using Sprache;
 
 public static class QueryParser {
@@ -75,75 +75,18 @@ public static class QueryParser {
             select new NumericDirective(op, id) as Directive);
     #endregion
 
-    public static Parser<string> Num => Parse.Numeric.AtLeastOnce().Text().Token();
-    public static Parser<string> Var => Parse.Letter.AtLeastOnce().Text().Token();
-    public static Parser<QueryLiteral> Str => 
-        (from content in Parse.LetterOrDigit.AtLeastOnce().Text().Token()
-         select new QueryLiteral(content))
-        .Or(from leading in Parse.Char('"').Once()
-            from content in Parse.CharExcept('"').AtLeastOnce().Text().Token()
-            from trailing in Parse.Char('"').Once()
-            select new QueryLiteral(content))
-        .Or(from empty in Parse.String("\"\"").Once()
-            select new QueryLiteral(string.Empty));
-    
-    public static Parser<Query> Query => 
-        (from literalQuery in Str
-         select literalQuery as Query)
-        .Or(from expresionQuery in Expression
-            select expresionQuery as Query);
+    #region Expressions
+    #region Computed
+    public static Parser<DirectiveExpression> DirectiveExpression => throw new NotImplementedException();
+    public static Parser<NegatedExpression> NegatedExpression => throw new NotImplementedException();
+    public static Parser<LogicExpression> LogicExpression => throw new NotImplementedException();
 
-    public static Parser<BinaryExpression> BinaryExpression =>
-        from lExp in BinaryExpression
-        from bOp in Bop
-        from rExp in Expression
-        select new BinaryExpression(bOp, lExp, rExp);
+    public static Parser<ComputeExpression> ComputeExpression => throw new NotImplementedException();
+    #endregion
 
-    public static Parser<QueryExpression> Expression => 
-        (from neg in Parse.Char('!').Once()
-        from exp in Expression
-        select new NegateExpression(exp) as QueryExpression)
+    public static Parser<StringExpression> StringExpression => throw new NotImplementedException();
+    #endregion
 
-        .Or(from leading in Parse.Char('(').Once()
-        from exp in BinaryExpression
-        from trailing in Parse.Char(')').Once()
-        select exp)
-
-        .Or(from dir in Dir
-        select new DirectiveExpression(dir) as QueryExpression)
-
-        .Or(from lExp in Expression
-        from orOp in Parse.Char('|').Once()
-        from rExp in Expression
-        select new BinaryExpression(BinaryOperationType.Or, lExp, rExp) as QueryExpression)
-
-/*
-        .Or(from lExp in Expression
-        from op in Bop
-        from rExp in Expression
-        select new BinaryExpression(op, lExp, rExp) as QueryExpression)
-*/
-        ;
-
-    public static Parser<QueryDirective> Dir => 
-        from leading in Parse.WhiteSpace.Many()
-        from id in Var
-        from sep in Parse.Char(':').Once()
-        from val in Str
-        from trailing in Parse.WhiteSpace.Many()
-        select new QueryDirective(id, val.Literal);
-
-    public static Parser<BinaryOperationType> Bop => Parse.Char('|').Once().Select(_ => BinaryOperationType.Or)
-        .Or(Parse.Char('&').Once().Select(_ => BinaryOperationType.And));
-
-    public static bool TryParse(string query, out string errorMessage, out Query parsedQuery) {
-        var result = Query.TryParse(query);
-        errorMessage = result.Message;
-        parsedQuery = result.WasSuccessful ? result.Value : new QueryLiteral(string.Empty);
-
-        return result.WasSuccessful;
-    }
-    public static bool TryParse(string query,out Query parsedQuery) {
-        return TryParse(query, out var ignore, out parsedQuery);
-    }
+    public static Parser<Query> Query => (from str in StringExpression select new Query(str))
+        .Or(from compute in ComputeExpression select new Query(compute));
 }
