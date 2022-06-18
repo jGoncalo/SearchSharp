@@ -1,0 +1,39 @@
+#https://bnfplayground.pauliankline.com/
+
+<bop> ::= "|" | "&"
+<id> ::= [a-z]+
+<float> ::= "-" <float>
+	| [0-9]+ "." [0-9]+
+<int> ::= "-" <int> 
+	| [0-9]+
+<num> ::= <float> | <int>
+
+<whitespace> ::= " "
+
+<str> ::= "\"\""
+    | "\"" ([0-9] | [a-z] | " ")+ "\""
+	
+<dirOp> ::= ":" | "=" | "~"
+<dirNumbOp> ::= ("<=" | "<" | ">" | ">=") <num>
+<dirRangeOp> ::= "<" <num> ".." <num> ">"
+	| "<" <num> "..>"
+    | "<.." <num> ">"
+<dir> ::= <id> <dirOp> (<str> | <num>)
+    | <id> <dirNumbOp>
+    | <id> <dirRangeOp>
+
+<strexp> ::= "\"\""
+    | "\"" ([0-9] | [a-z] | " ")+ "\""
+    | ([0-9] | [a-z] | " ")+
+    
+<exp> ::= "(" <exp> ")"
+	| <nexp>
+    | <bexp>
+    | <dir>
+    
+<nexp> ::= "!" <exp>
+
+<bexp> ::= <exp> <bop> <exp>
+
+<query> ::= <strexp>
+	| <exp>
