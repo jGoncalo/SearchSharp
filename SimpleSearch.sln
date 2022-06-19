@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp", "SearchSharp\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Tests", "SearchSharp.Tests\SearchSharp.Tests.csproj", "{4509FC83-B1F4-4619-A4F7-359B7B762AA1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Memory", "SearchSharp.Memory\SearchSharp.Memory.csproj", "{7B1A70F4-8F52-4F4D-B674-BBE472B6DCE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Memory.Tests", "SearchSharp.Memory.Tests\SearchSharp.Memory.Tests.csproj", "{8839CDB9-77DB-4551-BCBE-095BBB5357B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{4509FC83-B1F4-4619-A4F7-359B7B762AA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4509FC83-B1F4-4619-A4F7-359B7B762AA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4509FC83-B1F4-4619-A4F7-359B7B762AA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B1A70F4-8F52-4F4D-B674-BBE472B6DCE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B1A70F4-8F52-4F4D-B674-BBE472B6DCE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B1A70F4-8F52-4F4D-B674-BBE472B6DCE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B1A70F4-8F52-4F4D-B674-BBE472B6DCE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
