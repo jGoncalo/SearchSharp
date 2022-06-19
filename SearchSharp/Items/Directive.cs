@@ -10,12 +10,12 @@ public abstract class Directive : QueryItem {
     }
 }
 
-public class SpecDirective : Directive {
-    public readonly RuleDirectiveOperator OperatorType;
+public class ComparisonDirective : Directive {
+    public readonly DirectiveComparisonOperator OperatorType;
     public readonly Literal Value;
     
 
-    public SpecDirective(RuleDirectiveOperator op, string identifer, Literal value) : base(DirectiveType.Specification, identifer) {
+    public ComparisonDirective(DirectiveComparisonOperator op, string identifer, Literal value) : base(DirectiveType.Comparison, identifer) {
         OperatorType = op;
         Value = value;
     }

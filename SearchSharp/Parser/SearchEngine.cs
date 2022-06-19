@@ -1,5 +1,7 @@
-namespace SearchSharp.Parser;
+namespace SearchSharp.Engine;
 
+using SearchSharp.Parser;
+using SearchSharp.Engine.Rules;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using SearchSharp.Items;
@@ -11,7 +13,7 @@ using SearchExp = SearchSharp.Items.Expressions.Expression;
 public class SearchEngine<TQueryData> 
     where TQueryData : class {
     public interface IEvaluator {
-        Expression<Func<TQueryData, bool>> Evaluate(SpecDirective directive);
+        Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(string textQuery);
@@ -28,6 +30,14 @@ public class SearchEngine<TQueryData>
 
     public SearchEngine(IEvaluator evaluator){
         _evaluator = evaluator;
+    }
+
+    public SearchEngine(Action<Evaluator<TQueryData>.Builder> config){
+        if(config == null) throw new ArgumentNullException(nameof(config));
+        var builder = new Evaluator<TQueryData>.Builder();
+        config(builder);
+
+        _evaluator = builder.Build();
     }
 
     #region Providers
@@ -113,7 +123,7 @@ public class SearchEngine<TQueryData>
     }
     private Expression<Func<TQueryData, bool>> FromExpression(DirectiveExpression exp){
         var lambdaExpression = exp.Directive switch {
-            SpecDirective spec => _evaluator.Evaluate(spec),
+            ComparisonDirective spec => _evaluator.Evaluate(spec),
             NumericDirective num => _evaluator.Evaluate(num),
             RangeDirective range => _evaluator.Evaluate(range),
             

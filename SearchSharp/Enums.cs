@@ -13,11 +13,11 @@ public enum ExpressionType {
 }
 
 public enum DirectiveType {
-    Specification = 0,
+    Comparison = 0,
     Numeric = 1,
     Range = 2
 }
-public enum RuleDirectiveOperator {
+public enum DirectiveComparisonOperator {
     Rule = 0,           //:
     Equal = 1,          //=
     Similar = 2,        //~

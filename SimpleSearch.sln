@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Memory", "Searc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Memory.Tests", "SearchSharp.Memory.Tests\SearchSharp.Memory.Tests.csproj", "{8839CDB9-77DB-4551-BCBE-095BBB5357B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchSharp.Demo", "SearchSharp.Demo\SearchSharp.Demo.csproj", "{D6A926CF-BDDB-41CD-AE59-B935934A3026}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8839CDB9-77DB-4551-BCBE-095BBB5357B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6A926CF-BDDB-41CD-AE59-B935934A3026}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6A926CF-BDDB-41CD-AE59-B935934A3026}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6A926CF-BDDB-41CD-AE59-B935934A3026}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6A926CF-BDDB-41CD-AE59-B935934A3026}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

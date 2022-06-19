@@ -45,11 +45,11 @@ public static class QueryParser {
 
     #region Directive
     #region Operators
-    public static Parser<RuleDirectiveOperator> RuleDirectiveOp => from op in Parse.Chars(':', '=', '~').Once().Text().Token().Named("directive-operator")
+    public static Parser<DirectiveComparisonOperator> RuleDirectiveOp => from op in Parse.Chars(':', '=', '~').Once().Text().Token().Named("directive-operator")
         select op switch { 
-            ":" => RuleDirectiveOperator.Rule,
-            "=" => RuleDirectiveOperator.Equal,
-            "~" => RuleDirectiveOperator.Similar,
+            ":" => DirectiveComparisonOperator.Rule,
+            "=" => DirectiveComparisonOperator.Equal,
+            "~" => DirectiveComparisonOperator.Similar,
             _ => throw new Exception($"Unexpected RuleDirectiveOp: {op}")
          };
     public static Parser<NumericDirective.Operator> NumericDirectiveOperator => from op in Parse.Regex("<=|>=|<|>").Named("diretive-numeric-operator").Text().Token()
@@ -81,7 +81,7 @@ public static class QueryParser {
         (from id in Identifier.Named("directive-identifier")
         from op in RuleDirectiveOp.Named("directive-operator")
         from lit in (from str in String select str as Literal).Or(from num in Numeric select num as Literal).Named("directive-value")
-        select new SpecDirective(op, id, lit) as Directive)
+        select new ComparisonDirective(op, id, lit) as Directive)
         .Or(from id in Identifier.Named("directive-identifier")
             from op in RangeDirectiveOperator.Named("directive-num-operator")
             select new RangeDirective(op, id) as Directive)
@@ -114,9 +114,14 @@ public static class QueryParser {
             select new NegatedExpression(lExp))
         .Or(from dir in Directive.Named("rule-directive") select new DirectiveExpression(dir));
 
-    public static Parser<StringExpression> StringExpression => throw new NotImplementedException();
+    public static Parser<StringExpression> StringExpression => (from empty in Parse.String("\"\"").Once() select new StringExpression(string.Empty))
+        .Or(from leading in Parse.Char('"').Once()
+            from content in Parse.CharExcept('"').AtLeastOnce().Text().Token()
+            from trailing in Parse.Char('"').Once()
+            select new StringExpression(content))
+        .Or(from content  in Parse.AnyChar.AtLeastOnce().Text().Token() select new StringExpression(content));
     #endregion
 
-    public static Parser<Query> Query => (from str in StringExpression select new Query(str))
-        .Or(from expr in LogicExpression select new Query(expr));
+    public static Parser<Query> Query => (from expr in LogicExpression select new Query(expr))
+        .Or(from str in StringExpression select new Query(str));
 }

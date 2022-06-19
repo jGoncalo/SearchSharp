@@ -133,9 +133,9 @@ public class ParserTests
 
         Assert.True(output.WasSuccessful);
         switch(op) {
-            case ':': Assert.Equal(RuleDirectiveOperator.Rule,    output.Value); break;
-            case '=': Assert.Equal(RuleDirectiveOperator.Equal,   output.Value); break;
-            case '~': Assert.Equal(RuleDirectiveOperator.Similar, output.Value); break;
+            case ':': Assert.Equal(DirectiveComparisonOperator.Rule,    output.Value); break;
+            case '=': Assert.Equal(DirectiveComparisonOperator.Equal,   output.Value); break;
+            case '~': Assert.Equal(DirectiveComparisonOperator.Similar, output.Value); break;
             default: Assert.True(false); break;
         }
     }
@@ -240,9 +240,9 @@ public class ParserTests
     [InlineData("id[..]", null)]
     [InlineData("id<>", null)]
     [InlineData("id", null)]
-    [InlineData("id:1234", DirectiveType.Specification)]
-    [InlineData("id=1234", DirectiveType.Specification)]
-    [InlineData("id~1234", DirectiveType.Specification)]
+    [InlineData("id:1234", DirectiveType.Comparison)]
+    [InlineData("id=1234", DirectiveType.Comparison)]
+    [InlineData("id~1234", DirectiveType.Comparison)]
     [InlineData("id>=1", DirectiveType.Numeric)]
     [InlineData("id>1", DirectiveType.Numeric)]
     [InlineData("id<1", DirectiveType.Numeric)]
@@ -261,7 +261,7 @@ public class ParserTests
             Assert.Equal("id", result.Value.Identifier);
 
             switch(result.Value){
-                case SpecDirective spec:
+                case ComparisonDirective spec:
                     Assert.Equal("1234", spec.Value.RawValue);
                     break;
                 case NumericDirective num:

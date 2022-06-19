@@ -1,6 +1,6 @@
-namespace SearchSharp.Providers;
+﻿using SearchSharp.Engine;
 
-using SearchSharp.Parser;
+namespace SearchSharp.Memory;
 
 public class MemoryProvider<TQueryData> : SearchEngine<TQueryData>.IDataProvider 
     where TQueryData : class {
@@ -12,14 +12,14 @@ public class MemoryProvider<TQueryData> : SearchEngine<TQueryData>.IDataProvider
 
     private MemoryProvider(string? name) { Name = name ?? "MemoryProvider"; }
 
-    public static MemoryProvider<TQueryData> FromStaticData(string name, IEnumerable<TQueryData> dataSource){ 
+    public static MemoryProvider<TQueryData> FromStaticData(IEnumerable<TQueryData> dataSource, string? name = null){ 
         var prov = new MemoryProvider<TQueryData>(name);
 
         prov._staticData = dataSource;
 
         return prov;
     }
-    public static MemoryProvider<TQueryData> FromDynamicData(string name, Func<IEnumerable<TQueryData>> dataSource){ 
+    public static MemoryProvider<TQueryData> FromDynamicData(Func<IEnumerable<TQueryData>> dataSource, string? name = null){ 
         var prov = new MemoryProvider<TQueryData>(name);
 
         prov._dynamicData = dataSource;
@@ -32,11 +32,11 @@ public class MemoryProvider<TQueryData> : SearchEngine<TQueryData>.IDataProvider
     }
     public IQueryable<TQueryData> DataSource() {
         IQueryable<TQueryData> queryable;
+
         if(_staticData != null) queryable = _staticData.AsQueryable();
-        else if(_dynamicData != null) queryable = _dynamicData()?.AsQueryable() ?? throw new Exception("Dynamic data not found");
+        else if(_dynamicData != null) queryable = _dynamicData()?.AsQueryable() ?? throw new Exception("No data source provided");
         else throw new Exception("No data source provided");
 
         return queryable;
     }
-
 }
