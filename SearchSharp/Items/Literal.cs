@@ -1,4 +1,4 @@
-namespace SearchSharp.Core.Items;
+namespace SearchSharp.Items;
 
 public abstract class Literal : QueryItem {
     public readonly string RawValue;

@@ -1,4 +1,4 @@
-namespace SearchSharp.Core.Items.Expressions;
+namespace SearchSharp.Items.Expressions;
 
 public class NegatedExpression : LogicExpression {
     public readonly LogicExpression Negated;

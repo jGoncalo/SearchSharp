@@ -1,9 +1,9 @@
 namespace SearchSharp.Tests;
 
-using SearchSharp.Core.Parser;
-using SearchSharp.Core.Items;
-using SearchSharp.Core.Items.Expressions;
-using SearchSharp.Core;
+using SearchSharp.Parser;
+using SearchSharp.Items;
+using SearchSharp.Items.Expressions;
+using SearchSharp;
 using Sprache;
 using System.Text.RegularExpressions;
 
@@ -129,13 +129,13 @@ public class ParserTests
     [InlineData('=')]
     [InlineData('~')]
     public void SpecDirectiveOperator_Parser(char op){
-        var output = QueryParser.SpecDirectiveOperator.TryParse($"{op}");
+        var output = QueryParser.RuleDirectiveOp.TryParse($"{op}");
 
         Assert.True(output.WasSuccessful);
         switch(op) {
-            case ':': Assert.Equal(SpecDirectiveOperator.Rule,    output.Value); break;
-            case '=': Assert.Equal(SpecDirectiveOperator.Equal,   output.Value); break;
-            case '~': Assert.Equal(SpecDirectiveOperator.Similar, output.Value); break;
+            case ':': Assert.Equal(RuleDirectiveOperator.Rule,    output.Value); break;
+            case '=': Assert.Equal(RuleDirectiveOperator.Equal,   output.Value); break;
+            case '~': Assert.Equal(RuleDirectiveOperator.Similar, output.Value); break;
             default: Assert.True(false); break;
         }
     }
@@ -293,8 +293,7 @@ public class ParserTests
         }
     }
 
-     [Theory]
-    [InlineData("abc:123&zzz:222")]
+    [Theory]
     [InlineData("abc:123")]
     [InlineData("abc:123&zzz:222")]
     [InlineData("(abc:123&zzz:222)")]

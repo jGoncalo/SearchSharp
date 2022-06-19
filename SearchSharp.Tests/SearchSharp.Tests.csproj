@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SearchSharp.Core\SearchSharp.Core.csproj" />
+    <ProjectReference Include="..\SearchSharp\SearchSharp.csproj" />
   </ItemGroup>
 
 </Project>

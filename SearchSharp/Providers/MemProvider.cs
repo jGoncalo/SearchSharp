@@ -1,6 +1,6 @@
-namespace SearchSharp.Core.Providers;
+namespace SearchSharp.Providers;
 
-using SearchSharp.Core.Parser;
+using SearchSharp.Parser;
 
 public class MemoryProvider<TQueryData> : SearchEngine<TQueryData>.IDataProvider 
     where TQueryData : class {

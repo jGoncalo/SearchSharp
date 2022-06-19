@@ -1,8 +1,8 @@
-namespace SearchSharp.Core.Parser;
+namespace SearchSharp.Parser;
 
-using SearchSharp.Core;
-using SearchSharp.Core.Items;
-using SearchSharp.Core.Items.Expressions;
+using SearchSharp;
+using SearchSharp.Items;
+using SearchSharp.Items.Expressions;
 using Sprache;
 
 public static class QueryParser {
@@ -45,12 +45,12 @@ public static class QueryParser {
 
     #region Directive
     #region Operators
-    public static Parser<SpecDirectiveOperator> SpecDirectiveOperator => from op in Parse.Chars(':', '=', '~').Once().Text().Token().Named("directive-operator")
+    public static Parser<RuleDirectiveOperator> RuleDirectiveOp => from op in Parse.Chars(':', '=', '~').Once().Text().Token().Named("directive-operator")
         select op switch { 
-            ":" => Core.SpecDirectiveOperator.Rule,
-            "=" => Core.SpecDirectiveOperator.Equal,
-            "~" => Core.SpecDirectiveOperator.Similar,
-            _ => throw new Exception($"Unexpected SpecDirectiveOperator: {op}")
+            ":" => RuleDirectiveOperator.Rule,
+            "=" => RuleDirectiveOperator.Equal,
+            "~" => RuleDirectiveOperator.Similar,
+            _ => throw new Exception($"Unexpected RuleDirectiveOp: {op}")
          };
     public static Parser<NumericDirective.Operator> NumericDirectiveOperator => from op in Parse.Regex("<=|>=|<|>").Named("diretive-numeric-operator").Text().Token()
         from num in Numeric
@@ -79,7 +79,7 @@ public static class QueryParser {
     
     public static Parser<Directive> Directive => 
         (from id in Identifier.Named("directive-identifier")
-        from op in SpecDirectiveOperator.Named("directive-operator")
+        from op in RuleDirectiveOp.Named("directive-operator")
         from lit in (from str in String select str as Literal).Or(from num in Numeric select num as Literal).Named("directive-value")
         select new SpecDirective(op, id, lit) as Directive)
         .Or(from id in Identifier.Named("directive-identifier")

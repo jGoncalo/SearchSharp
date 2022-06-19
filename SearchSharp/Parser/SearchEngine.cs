@@ -1,12 +1,12 @@
-namespace SearchSharp.Core.Parser;
+namespace SearchSharp.Parser;
 
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using SearchSharp.Core.Items;
-using SearchSharp.Core.Items.Expressions;
+using SearchSharp.Items;
+using SearchSharp.Items.Expressions;
 using Sprache;
 using LinqExp = System.Linq.Expressions.Expression;
-using SearchExp = SearchSharp.Core.Items.Expressions.Expression;
+using SearchExp = SearchSharp.Items.Expressions.Expression;
 
 public class SearchEngine<TQueryData> 
     where TQueryData : class {

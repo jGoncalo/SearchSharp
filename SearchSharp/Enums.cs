@@ -1,4 +1,4 @@
-﻿namespace SearchSharp.Core;
+﻿namespace SearchSharp;
 
 public enum LiteralType {
     Numeric = 0,
@@ -17,7 +17,7 @@ public enum DirectiveType {
     Numeric = 1,
     Range = 2
 }
-public enum SpecDirectiveOperator {
+public enum RuleDirectiveOperator {
     Rule = 0,           //:
     Equal = 1,          //=
     Similar = 2,        //~

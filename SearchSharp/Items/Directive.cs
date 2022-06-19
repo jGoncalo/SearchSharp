@@ -1,4 +1,4 @@
-namespace SearchSharp.Core.Items;
+namespace SearchSharp.Items;
 
 public abstract class Directive : QueryItem {
     public readonly DirectiveType Type;
@@ -11,11 +11,11 @@ public abstract class Directive : QueryItem {
 }
 
 public class SpecDirective : Directive {
-    public readonly SpecDirectiveOperator OperatorType;
+    public readonly RuleDirectiveOperator OperatorType;
     public readonly Literal Value;
     
 
-    public SpecDirective(SpecDirectiveOperator op, string identifer, Literal value) : base(DirectiveType.Specification, identifer) {
+    public SpecDirective(RuleDirectiveOperator op, string identifer, Literal value) : base(DirectiveType.Specification, identifer) {
         OperatorType = op;
         Value = value;
     }

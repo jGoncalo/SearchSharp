@@ -1,4 +1,4 @@
-namespace SearchSharp.Core.Items.Expressions;
+namespace SearchSharp.Items.Expressions;
 
 public abstract class Expression : QueryItem {
     public readonly ExpressionType Type;
