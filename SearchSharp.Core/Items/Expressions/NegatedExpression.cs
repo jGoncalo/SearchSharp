@@ -1,9 +1,9 @@
 namespace SearchSharp.Core.Items.Expressions;
 
-public abstract class NegatedExpression : ComputeExpression {
-    public readonly ComputeExpression Negated;
+public class NegatedExpression : LogicExpression {
+    public readonly LogicExpression Negated;
 
-    public NegatedExpression(ComputeExpression negated) : base(ExpressionType.Negated) {
+    public NegatedExpression(LogicExpression negated) : base(ExpressionType.Negated) {
         Negated = negated;
     }
 }

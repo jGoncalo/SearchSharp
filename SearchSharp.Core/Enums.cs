@@ -31,5 +31,6 @@ public enum DirectiveNumericOperator {
 
 public enum LogicOperator {
     Or = 0,
-    And = 1
+    And = 1,
+    Xor = 2
 }

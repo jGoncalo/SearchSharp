@@ -2,21 +2,37 @@ namespace SearchSharp.Tests;
 
 using SearchSharp.Core.Parser;
 using SearchSharp.Core.Items;
+using SearchSharp.Core.Items.Expressions;
 using SearchSharp.Core;
 using Sprache;
 using System.Text.RegularExpressions;
 
 public class ParserTests
 {
-    [Fact]
-    public void IdentifierParser()
+    [Theory]
+    [InlineData("", false)]
+    [InlineData(" ", false)]
+    [InlineData("\n", false)]
+    [InlineData("\t", false)]
+    [InlineData("2", false)]
+    [InlineData("&", false)]
+    [InlineData("|", false)]
+    [InlineData("^", false)]
+    [InlineData("-", false)]
+    [InlineData(">", false)]
+    [InlineData("<", false)]
+    [InlineData("=", false)]
+    [InlineData("a", true)]
+    [InlineData("ab", true)]
+    [InlineData("a2", true)]
+    [InlineData("a22", true)]
+    [InlineData("_22d", true)]
+    public void IdentifierParser(string text, bool shouldWork)
     {
-        var text = "text";
-        
         var output = QueryParser.Identifier.TryParse(text);
 
-        Assert.True(output.WasSuccessful);
-        Assert.Equal(text, output.Value);
+        Assert.Equal(shouldWork, output.WasSuccessful);
+        if(shouldWork) Assert.Equal(text, output.Value);
     }
 
 
@@ -117,12 +133,32 @@ public class ParserTests
 
         Assert.True(output.WasSuccessful);
         switch(op) {
-            case ':': Assert.Equal(SpecDirectiveOperator.Rule, output.Value); break;
-            case '=': Assert.Equal(SpecDirectiveOperator.Equal, output.Value); break;
+            case ':': Assert.Equal(SpecDirectiveOperator.Rule,    output.Value); break;
+            case '=': Assert.Equal(SpecDirectiveOperator.Equal,   output.Value); break;
             case '~': Assert.Equal(SpecDirectiveOperator.Similar, output.Value); break;
             default: Assert.True(false); break;
         }
     }
+
+    [Theory]
+    [InlineData('|', true)]
+    [InlineData('&', true)]
+    [InlineData('^', true)]
+    [InlineData('!', false)]
+    public void LogicOp_Parser(char op, bool shouldWork){
+        var result = QueryParser.LogicOp.TryParse($"{op}");
+
+        Assert.Equal(result.WasSuccessful, shouldWork);
+        if(shouldWork){
+            switch(op) {
+                case '|': Assert.Equal(LogicOperator.Or, result.Value);  break;
+                case '&': Assert.Equal(LogicOperator.And, result.Value); break;
+                case '^': Assert.Equal(LogicOperator.Xor, result.Value); break;
+                default:  Assert.True(false); break;
+            }
+        }
+    }
+
 
     [Theory]
     [InlineData(">=", "1")]
@@ -171,7 +207,7 @@ public class ParserTests
     [InlineData("a", "")]
     [InlineData("", "a")]
     public void RangeDirectiveOperator_Parser(string lower, string upper){
-        var result = QueryParser.RangeDirectiveOperator.TryParse($"<{lower}..{upper}>");
+        var result = QueryParser.RangeDirectiveOperator.TryParse($"[{lower}..{upper}]");
         var numRegEx = new Regex("[0-9]+(\\.[0-9]+)?");
 
         if(string.IsNullOrWhiteSpace(lower) && string.IsNullOrWhiteSpace(upper)) Assert.False(result.WasSuccessful);
@@ -201,7 +237,7 @@ public class ParserTests
     [InlineData("id>", null)]
     [InlineData("id<", null)]
     [InlineData("id<=", null)]
-    [InlineData("id<..>", null)]
+    [InlineData("id[..]", null)]
     [InlineData("id<>", null)]
     [InlineData("id", null)]
     [InlineData("id:1234", DirectiveType.Specification)]
@@ -211,9 +247,9 @@ public class ParserTests
     [InlineData("id>1", DirectiveType.Numeric)]
     [InlineData("id<1", DirectiveType.Numeric)]
     [InlineData("id<=1", DirectiveType.Numeric)]
-    [InlineData("id<1..10>", DirectiveType.Range)]
-    [InlineData("id<..10>", DirectiveType.Range)]
-    [InlineData("id<1..>", DirectiveType.Range)]
+    [InlineData("id[1..10]", DirectiveType.Range)]
+    [InlineData("id[..10]", DirectiveType.Range)]
+    [InlineData("id[1..]", DirectiveType.Range)]
     public void Directive_Parser(string value, DirectiveType? expectedType){
         var result = QueryParser.Directive.TryParse(value);
 
@@ -240,5 +276,31 @@ public class ParserTests
                     break;
             }
         }
+    }
+
+    [Theory]
+    [InlineData("abc:123", ExpressionType.Directive)]
+    public void RuleExpression_Parse(string value, ExpressionType? subType){
+        var result = QueryParser.RuleExpression.TryParse(value);
+
+        Assert.Equal(subType != null, result.WasSuccessful);
+        if(subType != null) {
+            switch(subType) {
+                case ExpressionType.Directive:
+                    Assert.IsType<DirectiveExpression>(result.Value);
+                    break;
+            }
+        }
+    }
+
+     [Theory]
+    [InlineData("abc:123&zzz:222")]
+    [InlineData("abc:123")]
+    [InlineData("abc:123&zzz:222")]
+    [InlineData("(abc:123&zzz:222)")]
+    public void LogicExpression_Parse(string value){
+        var result = QueryParser.LogicExpression.TryParse(value);
+
+        Assert.True(result.WasSuccessful);
     }
 }

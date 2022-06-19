@@ -23,11 +23,11 @@ public class SearchEngine<TQueryData>
         IQueryable<TQueryData> DataSource();
     }
 
-    private readonly IEvaluator _analyzer;
+    private readonly IEvaluator _evaluator;
     private readonly Dictionary<string, IDataProvider> _dataProviders = new();
 
-    public SearchEngine(IEvaluator analyzer){
-        _analyzer = analyzer;
+    public SearchEngine(IEvaluator evaluator){
+        _evaluator = evaluator;
     }
 
     #region Providers
@@ -64,7 +64,7 @@ public class SearchEngine<TQueryData>
         if(!result.WasSuccessful) throw new Exception(result.Message);
 
         return result.Value.Root switch {
-            ComputeExpression compute => FromExpression(compute),
+            LogicExpression compute => FromExpression(compute),
             StringExpression @string => FromExpression(@string),
 
             _ => throw new Exception($"Unexpected query expression type: {result.Value.Root.GetType().Name}")
@@ -72,11 +72,11 @@ public class SearchEngine<TQueryData>
     }
 
     private Expression<Func<TQueryData, bool>> FromExpression(StringExpression exp){
-        return _analyzer.Evaluate(exp.Value);
+        return _evaluator.Evaluate(exp.Value);
     }
-    private Expression<Func<TQueryData, bool>> FromExpression(ComputeExpression exp){
+    private Expression<Func<TQueryData, bool>> FromExpression(LogicExpression exp){
         return exp switch {
-            LogicExpression logic => FromExpression(logic),
+            Items.Expressions.BinaryExpression logic => FromExpression(logic),
             NegatedExpression neg => FromExpression(neg),
             DirectiveExpression dir => FromExpression(dir),
             SearchExp => FromExpression(exp),
@@ -84,7 +84,7 @@ public class SearchEngine<TQueryData>
             _ => throw new Exception($"Unexpected query expression type: {exp.GetType().Name}")
         };
     }
-    private Expression<Func<TQueryData, bool>> FromExpression(LogicExpression exp){
+    private Expression<Func<TQueryData, bool>> FromExpression(Items.Expressions.BinaryExpression exp){
         var leftLambda = FromExpression(exp.Left);
         var rightLambda = FromExpression(exp.Right);
 
@@ -92,6 +92,8 @@ public class SearchEngine<TQueryData>
         {
             LogicOperator.Or => LinqExp.Or(leftLambda, rightLambda),
             LogicOperator.And => LinqExp.Add(leftLambda, rightLambda),
+            LogicOperator.Xor => LinqExp.ExclusiveOr(leftLambda, rightLambda),
+
             _ => throw new Exception($"unexpected OperationType value: {exp.Operator}")
         };
 
@@ -111,9 +113,9 @@ public class SearchEngine<TQueryData>
     }
     private Expression<Func<TQueryData, bool>> FromExpression(DirectiveExpression exp){
         var lambdaExpression = exp.Directive switch {
-            SpecDirective spec => _analyzer.Evaluate(spec),
-            NumericDirective num => _analyzer.Evaluate(num),
-            RangeDirective range => _analyzer.Evaluate(range),
+            SpecDirective spec => _evaluator.Evaluate(spec),
+            NumericDirective num => _evaluator.Evaluate(num),
+            RangeDirective range => _evaluator.Evaluate(range),
             
             _ => throw new Exception($"Unexpected directive type: {exp.Directive.GetType().Name}")
         };
