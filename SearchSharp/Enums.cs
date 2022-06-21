@@ -5,7 +5,7 @@ public enum LiteralType {
     String = 1
 }
 
-public enum ExpressionType {
+public enum ExpType {
     String = 0,
     Directive = 1,
     Negated = 2,

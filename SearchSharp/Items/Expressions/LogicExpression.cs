@@ -1,7 +1,7 @@
 namespace SearchSharp.Items.Expressions;
 
 public abstract class LogicExpression : Expression {
-    public LogicExpression(ExpressionType type) : base(type) {
+    public LogicExpression(ExpType type) : base(type) {
         
     }
 }

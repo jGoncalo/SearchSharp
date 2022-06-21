@@ -1,4 +1,5 @@
 using SearchSharp.Items;
+using SearchSharp.Engine.Rules.Visitor;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 
@@ -62,24 +63,28 @@ public class Evaluator<TQueryData> : SearchEngine<TQueryData>.IEvaluator where T
     #region Compose Lambda
     private static Expression<Func<TQueryData, bool>> ComposeComparison(Expression<Func<TQueryData, StringLiteral, bool>> stringRule,
         StringLiteral literal) {
-        
-        return _ => false;
+        var visited = new RuleExpressionVisitor<TQueryData, StringLiteral>(literal).EvaluateLiterals(stringRule);
+        return _ => true;
     }
     private static Expression<Func<TQueryData, bool>> ComposeComparison(Expression<Func<TQueryData, NumericLiteral, bool>> numericRule,
         NumericLiteral literal) {
-        return _ => false;
+        var visited = new RuleExpressionVisitor<TQueryData, NumericLiteral>(literal).EvaluateLiterals(numericRule);
+        return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeNumeric(Expression<Func<TQueryData, NumericLiteral, bool>> numericRule,
         NumericLiteral literal){
-        return _ => false;
+        var visited = new RuleExpressionVisitor<TQueryData, NumericLiteral>(literal).EvaluateLiterals(numericRule);
+        return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeRange(Expression<Func<TQueryData, NumericLiteral?, NumericLiteral?, bool>> rangeRule,
         NumericLiteral? lower, NumericLiteral? upper){
-        return _ => false;
+        //var a = new RuleExpressionVisitor<TQueryData>().Modify(rangeRule);
+        return _ => true;
     }
     private static Expression<Func<TQueryData, bool>> ComposeText(Expression<Func<TQueryData, string, bool>> rule,
         string text){ 
-        return _ => false;
+        //var a = new RuleExpressionVisitor<TQueryData>().Modify(rule);
+        return _ => true;
     }
     #endregion 
 

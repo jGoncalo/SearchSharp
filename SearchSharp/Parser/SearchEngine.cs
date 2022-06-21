@@ -82,7 +82,11 @@ public class SearchEngine<TQueryData>
     }
 
     private Expression<Func<TQueryData, bool>> FromExpression(StringExpression exp){
-        return _evaluator.Evaluate(exp.Value);
+        var lambdaExpression = _evaluator.Evaluate(exp.Value);
+
+        var argExpression = LinqExp.Parameter(typeof(TQueryData));
+        return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression.Body,
+            $"StringExpression", new[] {argExpression});
     }
     private Expression<Func<TQueryData, bool>> FromExpression(LogicExpression exp){
         return exp switch {
@@ -100,14 +104,14 @@ public class SearchEngine<TQueryData>
 
         var composedLambda = exp.Operator switch 
         {
-            LogicOperator.Or => LinqExp.Or(leftLambda, rightLambda),
-            LogicOperator.And => LinqExp.Add(leftLambda, rightLambda),
-            LogicOperator.Xor => LinqExp.ExclusiveOr(leftLambda, rightLambda),
+            LogicOperator.Or => LinqExp.OrElse(leftLambda.Body, rightLambda.Body),
+            LogicOperator.And => LinqExp.AndAlso(leftLambda.Body, rightLambda.Body),
+            LogicOperator.Xor => LinqExp.ExclusiveOr(leftLambda.Body, rightLambda.Body),
 
             _ => throw new Exception($"unexpected OperationType value: {exp.Operator}")
         };
 
-        var argExpression = LinqExp.Parameter(typeof(TQueryData));
+        var argExpression = LinqExp.Parameter(typeof(TQueryData), "data");
         return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda, 
             $"Logic[{leftLambda.Name}_{exp.Operator}_{rightLambda.Name}", new [] {argExpression});
     }
@@ -115,7 +119,7 @@ public class SearchEngine<TQueryData>
         if(exp.Negated == null) throw new Exception("Unexpected negative expression with null child");
         var lambdaExpression = FromExpression(exp.Negated);
 
-        var composedLambda = LinqExp.Not(lambdaExpression);
+        var composedLambda = LinqExp.Not(lambdaExpression.Body);
         var argExpression = LinqExp.Parameter(typeof(TQueryData));
 
         return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda,
@@ -131,8 +135,7 @@ public class SearchEngine<TQueryData>
         };
 
         var argExpression = LinqExp.Parameter(typeof(TQueryData));
-
-        return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression, 
-            $"Directive[{exp.Directive.Type}->{exp.Directive.Identifier}]", new [] {argExpression});
+        return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression.Body, 
+            $"Directive[{exp.Directive.Type}->{exp.Directive.Identifier}]", lambdaExpression.Parameters);
     }
 }

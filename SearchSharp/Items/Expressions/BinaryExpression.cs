@@ -5,7 +5,7 @@ public class BinaryExpression : LogicExpression {
     public readonly LogicExpression Left;
     public readonly LogicExpression Right;
 
-    public BinaryExpression(LogicOperator logicOperator, LogicExpression left, LogicExpression right) : base(ExpressionType.Logic) {
+    public BinaryExpression(LogicOperator logicOperator, LogicExpression left, LogicExpression right) : base(ExpType.Logic) {
         Operator = logicOperator;
         Left = left;
         Right = right;

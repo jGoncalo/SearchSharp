@@ -22,7 +22,7 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        var se = new SearchEngine<Data>(config => config.SetDefaultHandler(_ => false)
+        var se = new SearchEngine<Data>(config => config.SetDefaultHandler(_ => true)
             .SetStringRule((d, text) => d.Description.Contains(text))
             .AddRule(new Rule<Data>.Builder("email")
                 .AddStringOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
@@ -43,7 +43,9 @@ internal class Program
             }, "staticProvider");
 
         Console.WriteLine("---SearchEngine---");
-        var results = se.Query("staticProvider", "id=7");
+        var query = "id=7 | id=9";
+        var results = se.Query("staticProvider", query);
+        Console.WriteLine($"Found: {results.Count()} for query \"{query}\"");
         foreach(var res in results){
             Console.WriteLine(res);
         }

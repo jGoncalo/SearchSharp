@@ -279,14 +279,14 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("abc:123", ExpressionType.Directive)]
-    public void RuleExpression_Parse(string value, ExpressionType? subType){
+    [InlineData("abc:123", ExpType.Directive)]
+    public void RuleExpression_Parse(string value, ExpType? subType){
         var result = QueryParser.RuleExpression.TryParse(value);
 
         Assert.Equal(subType != null, result.WasSuccessful);
         if(subType != null) {
             switch(subType) {
-                case ExpressionType.Directive:
+                case ExpType.Directive:
                     Assert.IsType<DirectiveExpression>(result.Value);
                     break;
             }
