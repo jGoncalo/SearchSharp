@@ -1,20 +1,19 @@
-using System.Linq;
 using System.Linq.Expressions;
 using SearchSharp.Items;
 
 namespace SearchSharp.Engine.Rules.Visitor;
 
-public class RuleExpressionVisitor<TQueryData, TLiteral> : ExpressionVisitor 
+public class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor 
     where TQueryData : class 
     where TLiteral : Literal {
 
     private readonly TLiteral _literal;
 
-    public RuleExpressionVisitor(TLiteral literal) {
+    public ReplaceLiteralVisitor(TLiteral literal) {
         _literal = literal;
     }
 
-    public Expression<Func<TQueryData, bool>> EvaluateLiterals(Expression<Func<TQueryData, TLiteral, bool>> expression)  
+    public Expression<Func<TQueryData, bool>> Replace(Expression<Func<TQueryData, TLiteral, bool>> expression)  
     {  
         var afterVisit = Visit(expression) as Expression<Func<TQueryData, TLiteral, bool>>;
 
@@ -25,24 +24,13 @@ public class RuleExpressionVisitor<TQueryData, TLiteral> : ExpressionVisitor
     protected override Expression VisitMember(MemberExpression node)
     {
         if(node.Member.DeclaringType == typeof(TLiteral)){
-            return ReplaceNumericLiteral(node);
-        }
-        if(node.Member.DeclaringType == typeof(TQueryData)){
-            return AssureQueryData(node);
+            return ReplaceLiteral(node);
         }
 
         return base.VisitMember(node);
     }
 
-    private Expression AssureQueryData(MemberExpression member){
-        /* TODO: assure TQueryData parameter for expression is named the same in all expressions
-         *       and all parameters are mapped to the same ParameterExpression (created in visitor)
-         *       ex: "(some) => some.Value" is swapped to "(data) => data.Value"
-        */
-        return member;
-    }
-
-    private Expression ReplaceNumericLiteral(MemberExpression member){
+    private Expression ReplaceLiteral(MemberExpression member){
         var parameter = member.Expression as ParameterExpression;
         var objMember = Expression.Convert(member, typeof(object));
         var lambda = Expression.Lambda<Func<TLiteral, object>>(objMember, parameter!);

@@ -10,13 +10,13 @@ public static class QueryParser {
     public static Parser<NumericLiteral> Int => 
         from sign in Parse.Char('-').Optional().Named("sign")
         from @int in Parse.Numeric.AtLeastOnce().Text().Token().Named("int-val")
-        select new NumericLiteral( (sign.IsDefined ? "-" : "") + @int, false);
+        select NumericLiteral.Int( (sign.IsDefined ? "-" : "") + @int);
     public static Parser<NumericLiteral> Float => 
         from sign in Parse.Char('-').Optional().Named("sign")
         from lInt in Parse.Numeric.AtLeastOnce().Text().Token().Named("float-major")
         from dot in Parse.Char('.').Once().Named("float-dot")
         from rInt in Parse.Numeric.AtLeastOnce().Text().Token().Named("float-minor")
-        select new NumericLiteral( (sign.IsDefined ? "-" : "") + $"{lInt}.{rInt}", true);
+        select NumericLiteral.Float( (sign.IsDefined ? "-" : "") + $"{lInt}.{rInt}");
     public static Parser<NumericLiteral> Numeric => Float.Or(Int);
     #endregion
 
@@ -70,11 +70,11 @@ public static class QueryParser {
         .Or(from leading in Parse.Char('[').Once().Named("diretive-range-start")
             from lower in Numeric.Named("diretive-range-lower")
             from mark in Parse.String("..]").Once().Named("diretive-range-end")
-            select new RangeDirective.Operator(lower, null))
+            select new RangeDirective.Operator(lower, NumericLiteral.Max))
         .Or(from leading in Parse.String("[..").Once().Named("diretive-range-start")
             from upper in Numeric.Named("diretive-range-upper")
             from mark in Parse.Char(']').Once().Named("diretive-range-end")
-            select new RangeDirective.Operator(null, upper));
+            select new RangeDirective.Operator(NumericLiteral.Min, upper));
     #endregion
     
     public static Parser<Directive> Directive => 

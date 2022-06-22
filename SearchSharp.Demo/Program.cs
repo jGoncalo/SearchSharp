@@ -29,8 +29,12 @@ internal class Program
                 .AddStringOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Email.Contains(str.Value))
                 .Build())
             .AddRule(new Rule<Data>.Builder("id")
-                .AddNumericOperator(DirectiveComparisonOperator.Equal, (data, id) => data.Id == id.AsInt)
-                .AddRange((data, lower, upper) => data.Id >= (lower == null ? int.MinValue : lower.AsInt) && data.Id <= (upper == null ? int.MaxValue : upper.AsInt))
+                .AddComparisonOperator(DirectiveComparisonOperator.Equal, (data, id) => data.Id == id.AsInt)
+                .AddNumericOperator(DirectiveNumericOperator.GreaterOrEqual, (data, id) => data.Id >= id.AsInt)
+                .AddNumericOperator(DirectiveNumericOperator.Greater, (data, id) => data.Id > id.AsInt)
+                .AddNumericOperator(DirectiveNumericOperator.Lesser, (data, id) => data.Id < id.AsInt)
+                .AddNumericOperator(DirectiveNumericOperator.LesserOrEqual, (data, id) => data.Id <= id.AsInt)
+                .AddRangeOperator((data, lower, upper) => data.Id >= lower.AsInt && data.Id <= upper.AsInt)
                 .Build())
             .AddRule(new Rule<Data>.Builder("description")
                 .AddStringOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Description == str.Value)
@@ -43,7 +47,7 @@ internal class Program
             }, "staticProvider");
 
         Console.WriteLine("---SearchEngine---");
-        var query = "id=7 | id=9";
+        var query = "email=addrs";
         var results = se.Query("staticProvider", query);
         Console.WriteLine($"Found: {results.Count()} for query \"{query}\"");
         foreach(var res in results){

@@ -20,10 +20,10 @@ public class StringLiteral : Literal {
 
 public class NumericLiteral : Literal {
 
-    public readonly int AsInt;
-    public readonly float AsFloat;
+    public int AsInt { get; }
+    public float AsFloat { get; }
 
-    public NumericLiteral(string rawValue, bool isFloat) : base(LiteralType.Numeric, rawValue) {
+    private NumericLiteral(string rawValue, bool isFloat) : base(LiteralType.Numeric, rawValue) {
         if(isFloat) {
             AsFloat = float.TryParse(RawValue, out var floatValue) ? floatValue : 0.0f;
             AsInt = (int) AsFloat;
@@ -34,4 +34,14 @@ public class NumericLiteral : Literal {
         }
         
     }
+    private NumericLiteral(bool isMin) : base(LiteralType.Numeric, string.Empty) {
+        AsInt = isMin ? int.MinValue : int.MaxValue;
+        AsFloat = isMin ? float.MinValue : float.MaxValue;
+    }
+
+    public static NumericLiteral Float(string rawValue) => new NumericLiteral(rawValue, true);
+    public static NumericLiteral Int(string rawValue) => new NumericLiteral(rawValue, false);
+
+    public static NumericLiteral Min => new NumericLiteral(true);
+    public static NumericLiteral Max => new NumericLiteral(false);
 }

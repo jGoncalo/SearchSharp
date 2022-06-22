@@ -41,10 +41,10 @@ public class NumericDirective : Directive {
 
 public class RangeDirective : Directive {
     public class Operator {
-        public readonly NumericLiteral? LowerBound;
-        public readonly NumericLiteral? UpperBound;
+        public readonly NumericLiteral LowerBound;
+        public readonly NumericLiteral UpperBound;
 
-        public Operator(NumericLiteral? lower, NumericLiteral? upper) {
+        public Operator(NumericLiteral lower, NumericLiteral upper) {
             LowerBound = lower;
             UpperBound = upper;
         }

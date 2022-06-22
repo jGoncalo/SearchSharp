@@ -63,23 +63,23 @@ public class Evaluator<TQueryData> : SearchEngine<TQueryData>.IEvaluator where T
     #region Compose Lambda
     private static Expression<Func<TQueryData, bool>> ComposeComparison(Expression<Func<TQueryData, StringLiteral, bool>> stringRule,
         StringLiteral literal) {
-        var visited = new RuleExpressionVisitor<TQueryData, StringLiteral>(literal).EvaluateLiterals(stringRule);
-        return _ => true;
+        var visited = new ReplaceLiteralVisitor<TQueryData, StringLiteral>(literal).Replace(stringRule);
+        return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeComparison(Expression<Func<TQueryData, NumericLiteral, bool>> numericRule,
         NumericLiteral literal) {
-        var visited = new RuleExpressionVisitor<TQueryData, NumericLiteral>(literal).EvaluateLiterals(numericRule);
+        var visited = new ReplaceLiteralVisitor<TQueryData, NumericLiteral>(literal).Replace(numericRule);
         return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeNumeric(Expression<Func<TQueryData, NumericLiteral, bool>> numericRule,
         NumericLiteral literal){
-        var visited = new RuleExpressionVisitor<TQueryData, NumericLiteral>(literal).EvaluateLiterals(numericRule);
+        var visited = new ReplaceLiteralVisitor<TQueryData, NumericLiteral>(literal).Replace(numericRule);
         return visited;
     }
-    private static Expression<Func<TQueryData, bool>> ComposeRange(Expression<Func<TQueryData, NumericLiteral?, NumericLiteral?, bool>> rangeRule,
-        NumericLiteral? lower, NumericLiteral? upper){
-        //var a = new RuleExpressionVisitor<TQueryData>().Modify(rangeRule);
-        return _ => true;
+    private static Expression<Func<TQueryData, bool>> ComposeRange(Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>> rangeRule,
+        NumericLiteral lower, NumericLiteral upper){
+        var visited = new ReplaceRangeVisitor<TQueryData>(lower, upper).Replace(rangeRule);
+        return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeText(Expression<Func<TQueryData, string, bool>> rule,
         string text){ 

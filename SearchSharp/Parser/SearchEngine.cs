@@ -2,6 +2,7 @@ namespace SearchSharp.Engine;
 
 using SearchSharp.Parser;
 using SearchSharp.Engine.Rules;
+using SearchSharp.Engine.Rules.Visitor;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using SearchSharp.Items;
@@ -73,12 +74,13 @@ public class SearchEngine<TQueryData>
         var result = QueryParser.Query.TryParse(query);
         if(!result.WasSuccessful) throw new Exception(result.Message);
 
-        return result.Value.Root switch {
+        var queryExpression = result.Value.Root switch {
             LogicExpression compute => FromExpression(compute),
             StringExpression @string => FromExpression(@string),
 
             _ => throw new Exception($"Unexpected query expression type: {result.Value.Root.GetType().Name}")
         };
+        return new AssureQueryArgumentVisitor<TQueryData>().Assure(queryExpression);
     }
 
     private Expression<Func<TQueryData, bool>> FromExpression(StringExpression exp){
@@ -111,19 +113,15 @@ public class SearchEngine<TQueryData>
             _ => throw new Exception($"unexpected OperationType value: {exp.Operator}")
         };
 
-        var argExpression = LinqExp.Parameter(typeof(TQueryData), "data");
         return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda, 
-            $"Logic[{leftLambda.Name}_{exp.Operator}_{rightLambda.Name}", new [] {argExpression});
+            $"Logic[{leftLambda.Name}_{exp.Operator}_{rightLambda.Name}", leftLambda.Parameters);
     }
     private Expression<Func<TQueryData, bool>> FromExpression(NegatedExpression exp){
         if(exp.Negated == null) throw new Exception("Unexpected negative expression with null child");
         var lambdaExpression = FromExpression(exp.Negated);
 
-        var composedLambda = LinqExp.Not(lambdaExpression.Body);
-        var argExpression = LinqExp.Parameter(typeof(TQueryData));
-
-        return LinqExp.Lambda<Func<TQueryData, bool>>(composedLambda,
-            $"Not[{lambdaExpression.Name}]", new [] {argExpression});
+        return LinqExp.Lambda<Func<TQueryData, bool>>(LinqExp.Not(lambdaExpression.Body),
+            $"Not[{lambdaExpression.Name}]", lambdaExpression.Parameters);
     }
     private Expression<Func<TQueryData, bool>> FromExpression(DirectiveExpression exp){
         var lambdaExpression = exp.Directive switch {
@@ -134,7 +132,6 @@ public class SearchEngine<TQueryData>
             _ => throw new Exception($"Unexpected directive type: {exp.Directive.GetType().Name}")
         };
 
-        var argExpression = LinqExp.Parameter(typeof(TQueryData));
         return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression.Body, 
             $"Directive[{exp.Directive.Type}->{exp.Directive.Identifier}]", lambdaExpression.Parameters);
     }
