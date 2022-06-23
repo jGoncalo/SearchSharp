@@ -10,7 +10,7 @@ public class Evaluator<TQueryData> : SearchEngine<TQueryData>.IEvaluator where T
         private readonly Dictionary<string, Rule<TQueryData>> _rules = new();
 
         private Expression<Func<TQueryData, string, bool>> _stringRule = (data, query) => data.ToString()!.Contains(query);
-        private Expression<Func<TQueryData, bool>> _defaultHandler = _ => true;
+        private Expression<Func<TQueryData, bool>> _defaultHandler = _ => false;
 
         public Builder() {
         }
@@ -38,7 +38,7 @@ public class Evaluator<TQueryData> : SearchEngine<TQueryData>.IEvaluator where T
             return this;
         }
         public Builder ResetDefaultHanlder() {
-            _defaultHandler = _ => true;
+            _defaultHandler = _ => false;
             return this;
         }
     
@@ -83,8 +83,8 @@ public class Evaluator<TQueryData> : SearchEngine<TQueryData>.IEvaluator where T
     }
     private static Expression<Func<TQueryData, bool>> ComposeText(Expression<Func<TQueryData, string, bool>> rule,
         string text){ 
-        //var a = new RuleExpressionVisitor<TQueryData>().Modify(rule);
-        return _ => true;
+        var visited = new ReplaceStringVisitor<TQueryData>(text).Replace(rule);
+        return visited;
     }
     #endregion 
 

@@ -22,23 +22,23 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        var se = new SearchEngine<Data>(config => config.SetDefaultHandler(_ => true)
+        var se = new SearchEngine<Data>(config => config.SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
-            .AddRule(new Rule<Data>.Builder("email")
-                .AddStringOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
-                .AddStringOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Email.Contains(str.Value))
+            .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
+                .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
+                .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Email.Contains(str.Value))
                 .Build())
             .AddRule(new Rule<Data>.Builder("id")
-                .AddComparisonOperator(DirectiveComparisonOperator.Equal, (data, id) => data.Id == id.AsInt)
-                .AddNumericOperator(DirectiveNumericOperator.GreaterOrEqual, (data, id) => data.Id >= id.AsInt)
-                .AddNumericOperator(DirectiveNumericOperator.Greater, (data, id) => data.Id > id.AsInt)
-                .AddNumericOperator(DirectiveNumericOperator.Lesser, (data, id) => data.Id < id.AsInt)
-                .AddNumericOperator(DirectiveNumericOperator.LesserOrEqual, (data, id) => data.Id <= id.AsInt)
-                .AddRangeOperator((data, lower, upper) => data.Id >= lower.AsInt && data.Id <= upper.AsInt)
+                .AddOperator(DirectiveComparisonOperator.Equal, (data, id) => data.Id == id.AsInt)
+                .AddOperator(DirectiveNumericOperator.GreaterOrEqual, (data, id) => data.Id >= id.AsInt)
+                .AddOperator(DirectiveNumericOperator.Greater, (data, id) => data.Id > id.AsInt)
+                .AddOperator(DirectiveNumericOperator.Lesser, (data, id) => data.Id < id.AsInt)
+                .AddOperator(DirectiveNumericOperator.LesserOrEqual, (data, id) => data.Id <= id.AsInt)
+                .AddOperator((data, lower, upper) => data.Id >= lower.AsInt && data.Id <= upper.AsInt)
                 .Build())
             .AddRule(new Rule<Data>.Builder("description")
-                .AddStringOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Description == str.Value)
-                .AddStringOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Description.Contains(str.Value))
+                .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Description == str.Value)
+                .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Description.Contains(str.Value))
                 .Build())
             ).AddMemoryProvider(new [] {
                 new Data { Id = 1, Email = "john@email.com", Description = "John Sheppard, some space guy" },
@@ -47,7 +47,7 @@ internal class Program
             }, "staticProvider");
 
         Console.WriteLine("---SearchEngine---");
-        var query = "email=addrs";
+        var query = "abc:1223";
         var results = se.Query("staticProvider", query);
         Console.WriteLine($"Found: {results.Count()} for query \"{query}\"");
         foreach(var res in results){

@@ -9,8 +9,8 @@ public class ReplaceRangeVisitor<TQueryData> : ExpressionVisitor
     private readonly NumericLiteral _lowerLiteral;
     private readonly NumericLiteral _upperLiteral;
 
-    private ParameterExpression lowerParameter = Expression.Parameter(typeof(object));
-    private ParameterExpression upperParameter = Expression.Parameter(typeof(object));
+    private ParameterExpression _lowerParameter = Expression.Parameter(typeof(object));
+    private ParameterExpression _upperParameter = Expression.Parameter(typeof(object));
 
     public ReplaceRangeVisitor(NumericLiteral lowerLiteral, NumericLiteral upperLiteral) {
         _lowerLiteral = lowerLiteral;
@@ -20,8 +20,8 @@ public class ReplaceRangeVisitor<TQueryData> : ExpressionVisitor
     public Expression<Func<TQueryData, bool>> Replace(Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>> expression)  
     {  
         var arguments = expression.Parameters.Where(p => p.Type == typeof(NumericLiteral)).ToArray();
-        lowerParameter = arguments.First() as ParameterExpression;
-        upperParameter = arguments.Last() as ParameterExpression;
+        _lowerParameter = arguments.First() as ParameterExpression;
+        _upperParameter = arguments.Last() as ParameterExpression;
 
         var afterVisit = Visit(expression) as Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>;
 
@@ -42,10 +42,10 @@ public class ReplaceRangeVisitor<TQueryData> : ExpressionVisitor
         var memberParameterName = (member.Expression as ParameterExpression)!.Name;
         NumericLiteral value;
 
-        if(memberParameterName == lowerParameter.Name){
+        if(memberParameterName == _lowerParameter.Name){
             value = _lowerLiteral;
         }
-        else if (memberParameterName == upperParameter.Name) {
+        else if (memberParameterName == _upperParameter.Name) {
             value = _upperLiteral;
         }
         else return member;
