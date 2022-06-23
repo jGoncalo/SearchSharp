@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/SearchSharp.Demo/bin/Debug/net6.0/SearchSharp.Demo.dll",
             "args": [],
             "cwd": "${workspaceFolder}/SearchSharp.Demo",
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "stopAtEntry": false
         },
         {

@@ -2,7 +2,7 @@
 
 namespace SearchSharp.Memory;
 
-public class MemoryProvider<TQueryData> : SearchEngine<TQueryData>.IDataProvider 
+public class MemoryProvider<TQueryData> : ISearchEngine<TQueryData>.IDataProvider 
     where TQueryData : class {
 
     public string Name { get; }

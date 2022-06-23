@@ -1,10 +1,19 @@
 using SearchSharp.Items;
 using System.Linq.Expressions;
-using System.Collections.Generic;
 
 namespace SearchSharp.Engine.Rules;
 
-public class Rule<TQueryData> where TQueryData : class {
+public interface IRule<TQueryData> where TQueryData : class {
+    string Identifier { get; } 
+    string Description { get; }
+
+    Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> ComparisonStrRules { get; }
+    Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> ComparisonNumRules { get; }
+    Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> NumericRules { get; }
+    Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule { get; }
+}
+
+public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
     public class Builder {
         public readonly string Identifier;
         private string _description = string.Empty;
@@ -47,12 +56,12 @@ public class Rule<TQueryData> where TQueryData : class {
         }
     }
 
-    public readonly string Identifier;
-    public readonly string Description;
-    public readonly Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> ComparisonStrRules = new();
-    public readonly Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> ComparisonNumRules = new();
-    public readonly Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> NumericRules = new();
-    public readonly Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule;
+    public string Identifier { get; }
+    public string Description { get; }
+    public Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> ComparisonStrRules { get; } = new();
+    public Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> ComparisonNumRules { get; } = new();
+    public Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> NumericRules { get; } = new();
+    public Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule { get; }
 
     private Rule(string identifier, string description,
         Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> comparisonStrRules,

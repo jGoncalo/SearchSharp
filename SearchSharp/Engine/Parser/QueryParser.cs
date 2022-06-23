@@ -1,4 +1,4 @@
-namespace SearchSharp.Parser;
+namespace SearchSharp.Engine.Parser;
 
 using SearchSharp;
 using SearchSharp.Items;

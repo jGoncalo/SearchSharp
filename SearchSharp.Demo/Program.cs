@@ -1,8 +1,6 @@
-﻿using System;
-using System.Linq.Expressions;
-using SearchSharp.Engine;
+﻿using SearchSharp.Engine;
+using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Rules;
-using SearchSharp.Items;
 using SearchSharp.Memory;
 
 namespace SearchSharp.Demo;
@@ -22,7 +20,8 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        var se = new SearchEngine<Data>(config => config.SetDefaultHandler(_ => false)
+        var se = new SearchEngine<Data>( new Config<Data>.Builder()
+            .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
             .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
@@ -40,18 +39,28 @@ internal class Program
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Description == str.Value)
                 .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Description.Contains(str.Value))
                 .Build())
-            ).AddMemoryProvider(new [] {
-                new Data { Id = 1, Email = "john@email.com", Description = "John Sheppard, some space guy" },
-                new Data { Id = 7, Email = "jane@email.com", Description = "Jane Sheppard, a great explorer" },
-                new Data { Id = 9, Email = "dave@addrs.com", Description = "Dane the viking, he is a very friendly barbarian" }
+            .Build())
+            .AddMemoryProvider(new [] {
+                new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },
+                new Data { Id = 7,  Email = "jane@email.com", Description = "Jane Sheppard, a great explorer" },
+                new Data { Id = 9,  Email = "dave@addrs.com", Description = "Dave the viking, he is a very friendly barbarian" },
+                new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" }
             }, "staticProvider");
 
         Console.WriteLine("---SearchEngine---");
-        var query = "abc:1223";
-        var results = se.Query("staticProvider", query);
-        Console.WriteLine($"Found: {results.Count()} for query \"{query}\"");
-        foreach(var res in results){
-            Console.WriteLine(res);
+
+        while(true){
+            Console.WriteLine("Input query:");
+            var query = Console.ReadLine();
+
+            if(query == "quit") break;
+
+            var results = se.Query("staticProvider", query);
+
+            Console.WriteLine($"\n\nFound: {results.Count()} for query \"{query}\"\n\n");
+            foreach(var res in results){
+                Console.WriteLine(res);
+            }
         }
     }
 }

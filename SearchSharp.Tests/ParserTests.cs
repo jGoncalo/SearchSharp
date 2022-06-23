@@ -1,6 +1,6 @@
 namespace SearchSharp.Tests;
 
-using SearchSharp.Parser;
+using SearchSharp.Engine.Parser;
 using SearchSharp.Items;
 using SearchSharp.Items.Expressions;
 using SearchSharp;

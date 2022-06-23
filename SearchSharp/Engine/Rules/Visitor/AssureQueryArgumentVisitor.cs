@@ -4,7 +4,7 @@ using SearchSharp.Items;
 
 namespace SearchSharp.Engine.Rules.Visitor;
 
-public class AssureQueryArgumentVisitor<TQueryData> : ExpressionVisitor 
+internal class AssureQueryArgumentVisitor<TQueryData> : ExpressionVisitor 
     where TQueryData : class {
     private readonly ParameterExpression _dataParameter = Expression.Parameter(typeof(TQueryData), "v_data");
 

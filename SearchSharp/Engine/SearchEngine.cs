@@ -1,6 +1,6 @@
 namespace SearchSharp.Engine;
 
-using SearchSharp.Parser;
+using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Rules;
 using SearchSharp.Engine.Rules.Visitor;
 using System.Collections.Generic;
@@ -11,42 +11,23 @@ using Sprache;
 using LinqExp = System.Linq.Expressions.Expression;
 using SearchExp = SearchSharp.Items.Expressions.Expression;
 
-public class SearchEngine<TQueryData> 
+public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : class {
-    public interface IEvaluator {
-        Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive);
-        Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
-        Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive);
-        Expression<Func<TQueryData, bool>> Evaluate(string textQuery);
-    }
-    public interface IDataProvider {
-        string Name { get; }
+    private readonly ISearchEngine<TQueryData>.IConfig _config;
+    private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
+    private readonly Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
 
-        Task<IQueryable<TQueryData>> DataSourceAsync(CancellationToken ct = default);
-        IQueryable<TQueryData> DataSource();
-    }
-
-    private readonly IEvaluator _evaluator;
-    private readonly Dictionary<string, IDataProvider> _dataProviders = new();
-
-    public SearchEngine(IEvaluator evaluator){
-        _evaluator = evaluator;
-    }
-
-    public SearchEngine(Action<Evaluator<TQueryData>.Builder> config){
-        if(config == null) throw new ArgumentNullException(nameof(config));
-        var builder = new Evaluator<TQueryData>.Builder();
-        config(builder);
-
-        _evaluator = builder.Build();
+    public SearchEngine(ISearchEngine<TQueryData>.IConfig config){
+        _config = config;
+        _evaluator = new Evaluator<TQueryData>(_config);
     }
 
     #region Providers
-    public SearchEngine<TQueryData> RegisterProvider(IDataProvider provider){
+    public SearchEngine<TQueryData> RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider){
         _dataProviders[provider.Name] = provider;
         return this;
     }
-    public SearchEngine<TQueryData> RemoveProvider(IDataProvider provider) {
+    public SearchEngine<TQueryData> RemoveProvider(ISearchEngine<TQueryData>.IDataProvider provider) {
         return RemoveProvider(provider.Name);
     }
     public SearchEngine<TQueryData> RemoveProvider(string providerName) {

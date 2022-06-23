@@ -3,7 +3,7 @@ using SearchSharp.Items;
 
 namespace SearchSharp.Engine.Rules.Visitor;
 
-public class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor 
+internal class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor 
     where TQueryData : class 
     where TLiteral : Literal {
 

@@ -1,10 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using SearchSharp.Items;
 
 namespace SearchSharp.Engine.Rules.Visitor;
 
-public class ReplaceStringVisitor<TQueryData> : ExpressionVisitor 
+internal class ReplaceStringVisitor<TQueryData> : ExpressionVisitor 
     where TQueryData : class {
 
     private readonly string _value;
