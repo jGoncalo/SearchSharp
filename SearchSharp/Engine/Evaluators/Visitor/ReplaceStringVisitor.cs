@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace SearchSharp.Engine.Rules.Visitor;
+namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class ReplaceStringVisitor<TQueryData> : ExpressionVisitor 
     where TQueryData : class {

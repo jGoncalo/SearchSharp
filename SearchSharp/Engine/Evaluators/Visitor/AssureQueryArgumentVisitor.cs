@@ -1,8 +1,6 @@
-using System.Linq;
 using System.Linq.Expressions;
-using SearchSharp.Items;
 
-namespace SearchSharp.Engine.Rules.Visitor;
+namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class AssureQueryArgumentVisitor<TQueryData> : ExpressionVisitor 
     where TQueryData : class {

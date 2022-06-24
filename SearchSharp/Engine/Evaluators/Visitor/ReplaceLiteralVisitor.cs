@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using SearchSharp.Items;
 
-namespace SearchSharp.Engine.Rules.Visitor;
+namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor 
     where TQueryData : class 

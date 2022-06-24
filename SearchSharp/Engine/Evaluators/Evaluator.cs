@@ -1,9 +1,9 @@
 using SearchSharp.Items;
-using SearchSharp.Engine.Rules.Visitor;
+using SearchSharp.Engine.Rules;
 using System.Linq.Expressions;
-using System.Collections.Generic;
+using SearchSharp.Engine.Evaluators.Visitor;
 
-namespace SearchSharp.Engine.Rules;
+namespace SearchSharp.Engine.Evaluators;
 
 public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where TQueryData : class {
     private readonly ISearchEngine<TQueryData>.IConfig _config;

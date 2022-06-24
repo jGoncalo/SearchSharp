@@ -1,13 +1,15 @@
 namespace SearchSharp.Engine;
 
+using SearchSharp.Exceptions;
 using SearchSharp.Engine.Parser;
-using SearchSharp.Engine.Rules;
-using SearchSharp.Engine.Rules.Visitor;
+using SearchSharp.Engine.Evaluators;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using SearchSharp.Items;
 using SearchSharp.Items.Expressions;
+using SearchSharp.Engine.Evaluators.Visitor;
 using Sprache;
+using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;
 using SearchExp = SearchSharp.Items.Expressions.Expression;
 
@@ -16,10 +18,12 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
     private readonly Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
+    private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
     public SearchEngine(ISearchEngine<TQueryData>.IConfig config){
         _config = config;
         _evaluator = new Evaluator<TQueryData>(_config);
+        _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
     }
 
     #region Providers
@@ -38,16 +42,25 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     #endregion
 
     public IQueryable<TQueryData> Query(string dataProvider, string query){
-        var foundProvider = _dataProviders.TryGetValue(dataProvider, out var provider);
-        if(!foundProvider || provider == null) throw new Exception($"Data provider \"{dataProvider}\" not registred");
+        if(string.IsNullOrWhiteSpace(dataProvider)) throw new ArgumentException("Null or empty argument", nameof(dataProvider));
+        if(string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Null or empty argument", nameof(query));
 
+        var foundProvider = _dataProviders.TryGetValue(dataProvider, out var provider);
+        _logger.LogInformation("{Provider} [{Status}] -> {Query}",
+            dataProvider,
+            foundProvider ? "Found" : "Unknown",
+            query);
+        if(!foundProvider || provider == null) throw new Exception($"Data provider \"{dataProvider}\" not registred");
         try{
             var queryLambda = FromQuery(query);
-            return provider.DataSource().Where(queryLambda);
+            _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
+                query, queryLambda.ToString());
+            var providerDataSource = provider.DataSource();
+            return providerDataSource.Where(queryLambda);
         }
-        catch{ 
-            //TODO: add info to thrown
-            throw;
+        catch(Exception exp){ 
+            _logger.LogCritical(exp, "Unexpected error for query [{Query}]", query);
+            throw new SearchExpception($"Unexpected error for query [{query}]", exp);
         }
     }
 

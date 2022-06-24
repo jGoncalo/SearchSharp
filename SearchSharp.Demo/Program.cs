@@ -3,6 +3,9 @@ using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Rules;
 using SearchSharp.Memory;
 
+using Microsoft.Extensions.Logging;
+using Serilog;
+
 namespace SearchSharp.Demo;
 
 public class Data {
@@ -20,7 +23,13 @@ internal class Program
 {
     static void Main(string[] args)
     {
+        var logFactory = new LoggerFactory()
+            .AddSerilog(new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateLogger());
+
         var se = new SearchEngine<Data>( new Config<Data>.Builder()
+            .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
             .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
@@ -52,6 +61,10 @@ internal class Program
         while(true){
             Console.WriteLine("Input query:");
             var query = Console.ReadLine();
+            if(string.IsNullOrWhiteSpace(query)) {
+                Console.WriteLine("No input detected...");
+                continue;
+            }
 
             if(query == "quit") break;
 

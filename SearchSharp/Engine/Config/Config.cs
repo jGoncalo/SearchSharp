@@ -1,5 +1,7 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Rules;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace SearchSharp.Engine.Config;
 
@@ -10,6 +12,7 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
 
         private Expression<Func<TQueryData, string, bool>> _stringRule = (data, query) => data.ToString()!.Contains(query);
         private Expression<Func<TQueryData, bool>> _defaultHandler = _ => false;
+        private ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
 
         public Builder() {
         }
@@ -32,6 +35,11 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
             return this;
         }
 
+        public Builder AddLogger(ILoggerFactory loggerFactory) {
+            _loggerFactory = loggerFactory;
+            return this;
+        }
+
         public Builder SetDefaultHandler(Expression<Func<TQueryData, bool>> rule){
             _defaultHandler = rule;
             return this;
@@ -42,7 +50,7 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
         }
     
         public Config<TQueryData> Build() {
-            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler);
+            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler, _loggerFactory);
         }
     }
 
@@ -50,11 +58,15 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
     public Expression<Func<TQueryData, string, bool>> StringRule { get; }
     public Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
+    public ILoggerFactory LoggerFactory { get; }
+
     public Config(IReadOnlyDictionary<string, IRule<TQueryData>> rules,
         Expression<Func<TQueryData, string, bool>> stringRule,
-        Expression<Func<TQueryData, bool>> defaultHandler) {
+        Expression<Func<TQueryData, bool>> defaultHandler,
+        ILoggerFactory loggerFactory) {
         Rules = rules;
         StringRule = stringRule;
         DefaultHandler = defaultHandler;
+        LoggerFactory = loggerFactory;
     }
 }

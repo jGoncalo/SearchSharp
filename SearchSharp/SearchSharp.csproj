@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Sprache" Version="3.0.0-develop-00049" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
   </ItemGroup>
 
 </Project>
