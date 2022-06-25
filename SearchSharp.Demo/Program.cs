@@ -2,9 +2,15 @@
 using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Rules;
 using SearchSharp.Memory;
+using SearchSharp.EntityFramework;
+
+using SearchSharp.Demo.EF.Context;
+using SearchSharp.Demo.EF.Tables;
 
 using Microsoft.Extensions.Logging;
 using Serilog;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace SearchSharp.Demo;
 
@@ -28,7 +34,7 @@ internal class Program
                 .WriteTo.Console()
                 .CreateLogger());
 
-        var se = new SearchEngine<Data>( new Config<Data>.Builder()
+        var memSe = new SearchEngine<Data>( new Config<Data>.Builder()
             .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
@@ -56,6 +62,58 @@ internal class Program
                 new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" }
             }, "staticProvider");
 
+        var dbSe = new SearchEngine<UserAccount>(new Config<UserAccount>.Builder()
+            .AddLogger(logFactory)
+            .SetDefaultHandler(_ => false)
+            .SetStringRule((d, text) => d.Name.Contains(text) || d.Email.Contains(text))
+            .AddRule(new Rule<UserAccount>.Builder("email").AddDescription("Match user email")
+                .AddOperator(DirectiveComparisonOperator.Equal, (acc, text) => acc.Email == text.Value)
+                .AddOperator(DirectiveComparisonOperator.Similar, (acc, text) => acc.Email.Contains(text.Value))
+                .Build())
+            .Build())
+        .AddEntityFrameworkProvider<SimpleContext, UserAccount>(() => SimpleContext.MemoryContext(ctx => {
+            ctx.UserAccounts.AddRange(new [] {
+                new UserAccount {
+                    Id = Guid.NewGuid(),
+                    Name = "John Doe",
+                    Email = "john@email.com",
+                    IsEnabled = false
+                },
+                new UserAccount {
+                    Id = Guid.NewGuid(),
+                    Name = "Jane Doe",
+                    Email = "jane@email.com",
+                    IsEnabled = true,
+                    Addresses = new [] {
+                        new UserAddress {
+                            Id = Guid.NewGuid(),
+                            Street = "Some street, number 5",
+                            Zip = "5555-555"
+                        }
+                    }
+                },
+                new UserAccount {
+                    Id = Guid.NewGuid(),
+                    Name = "Jeff Doe",
+                    Email = "jeff@email.com",
+                    IsEnabled = false,
+                    Addresses = new [] {
+                        new UserAddress {
+                            Id = Guid.NewGuid(),
+                            Street = "Some aveneu, number 5",
+                            Zip = "5555-444"
+                        },
+                        new UserAddress {
+                            Id = Guid.NewGuid(),
+                            Street = "Some zone, number 5",
+                            Zip = "5555-333"
+                        }
+                    }
+                }
+            });
+        }), (ctx) => ctx.UserAccounts, "databaseProvider");
+
+
         Console.WriteLine("---SearchEngine---");
 
         while(true){
@@ -68,7 +126,7 @@ internal class Program
 
             if(query == "quit") break;
 
-            var results = se.Query("staticProvider", query);
+            var results = dbSe.Query("databaseProvider", query);
 
             Console.WriteLine($"\n\nFound: {results.Count()} for query \"{query}\"\n\n");
             foreach(var res in results){
