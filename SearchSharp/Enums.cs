@@ -9,7 +9,8 @@ public enum ExpType {
     String = 0,
     Directive = 1,
     Negated = 2,
-    Logic = 3
+    Logic = 3,
+    Command = 4
 }
 
 public enum DirectiveType {

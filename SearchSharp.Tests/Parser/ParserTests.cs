@@ -1,4 +1,4 @@
-namespace SearchSharp.Tests;
+namespace SearchSharp.Tests.Parser;
 
 using SearchSharp.Engine.Parser;
 using SearchSharp.Items;

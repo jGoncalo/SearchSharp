@@ -120,8 +120,26 @@ public static class QueryParser {
             from trailing in Parse.Char('"').Once()
             select new StringExpression(content))
         .Or(from content  in Parse.AnyChar.AtLeastOnce().Text().Token() select new StringExpression(content));
+
+    public static Parser<CommandExpression> CommandExpression => (from command in Command
+        from ws in Parse.WhiteSpace.AtLeastOnce()
+        from commandExpr in CommandExpression
+        select new CommandExpression(commandExpr, command))
+        .Or(from command in Command 
+            select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from expr in LogicExpression select new Query(expr))
+    #region Commands
+    public static Parser<Command>  Command => (from prefix in Parse.Char('#').Once().Named("command-prefix")
+        from directive in Directive
+        select new Command(directive.Identifier, directive))
+        .Or(from prefix in Parse.Char('#').Once().Named("command-prefix")
+            from id in Identifier.Named("command-identifier")
+            select new Command(id, null));
+
+    #endregion
+
+    public static Parser<Query> Query => (from commandExpr in CommandExpression from query in Query select new Query(query.Root, commandExpr.Commands))
+        .Or(from expr in LogicExpression select new Query(expr))
         .Or(from str in StringExpression select new Query(str));
 }

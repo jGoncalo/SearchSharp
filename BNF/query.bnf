@@ -10,7 +10,11 @@
 
 <str> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""
-	
+
+<cmd> ::= "#" <id>
+<cmdExpr> ::= <cmdExpr> <cmd>
+    | <cmd>
+
 <dirOp> ::= ":" | "=" | "~"
 <dirNumbOp> ::= ("<=" | "<" | ">" | ">=") <num>
 <dirRangeOp> ::= "[" <num> ".." <num> "]"
@@ -33,4 +37,6 @@
     | "\"" ([0-9] | [a-z] | " ")+ "\""
     | ([0-9] | [a-z] | " ")+
 
-<query> ::= <strexp> | <logicExpr>
+<query> ::= <cmdExpr> <query>
+    | <strexp>
+    | <logicExpr>
