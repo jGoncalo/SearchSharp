@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using SearchSharp.Items;
 using SearchSharp.Engine.Rules;
+using SearchSharp.Engine.Commands;
 using Microsoft.Extensions.Logging;
 
 namespace SearchSharp.Engine;
@@ -19,6 +20,7 @@ public interface ISearchEngine<TQueryData> where TQueryData : class {
         IQueryable<TQueryData> DataSource();
     }
     public interface IConfig {
+        IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
         IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
         Expression<Func<TQueryData, string, bool>> StringRule { get; }
         Expression<Func<TQueryData, bool>> DefaultHandler { get; }

@@ -1,5 +1,13 @@
 ﻿namespace SearchSharp;
 
+[Flags]
+public enum EffectiveIn {
+    None = 0,
+    Provider = 1,
+    Query = 2
+}
+
+
 public enum LiteralType {
     Numeric = 0,
     String = 1

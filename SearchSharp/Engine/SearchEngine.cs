@@ -80,11 +80,15 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             query);
         if(!foundProvider || provider == null) throw new Exception($"Data provider \"{dataProvider}\" not registred");
         try{
-            var queryLambda = FromQuery(query);
+            var parseResult = QueryParser.Query.TryParse(query);
+            if(!parseResult.WasSuccessful) throw new Exception(parseResult.Message);
+            var parsedQuery = parseResult.Value;
+
+            var queryLambda = FromQuery(parsedQuery);
             _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
                 query, queryLambda.ToString());
-            var providerDataSource = provider.DataSource();
-            return providerDataSource.Where(queryLambda);
+            var providerDataSource = ApplyRules(provider.DataSource(), EffectiveIn.Provider, parsedQuery.Commands);
+            return ApplyRules(providerDataSource.Where(queryLambda), EffectiveIn.Query, parsedQuery.Commands);
         }
         catch(Exception exp){ 
             _logger.LogCritical(exp, "Unexpected error for query [{Query}]", query);
@@ -92,15 +96,22 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         }
     }
 
-    private Expression<Func<TQueryData, bool>> FromQuery(string query) {
-        var result = QueryParser.Query.TryParse(query);
-        if(!result.WasSuccessful) throw new Exception(result.Message);
+    private IQueryable<TQueryData> ApplyRules(IQueryable<TQueryData> query, EffectiveIn effectIn, IEnumerable<Command> commands){
+        var afterQ = query;
+        foreach(var command in commands) {
+            if(_config.Commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
+                afterQ = cmd.Effect(afterQ);
+            }
+        }
+        return afterQ;
+    }
 
-        var queryExpression = result.Value.Root switch {
+    private Expression<Func<TQueryData, bool>> FromQuery(Query query) {
+        var queryExpression = query.Root switch {
             LogicExpression compute => FromExpression(compute),
             StringExpression @string => FromExpression(@string),
 
-            _ => throw new Exception($"Unexpected query expression type: {result.Value.Root.GetType().Name}")
+            _ => throw new Exception($"Unexpected query expression type: {query.GetType().Name}")
         };
         return new AssureQueryArgumentVisitor<TQueryData>().Assure(queryExpression);
     }

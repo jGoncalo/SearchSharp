@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Rules;
+using SearchSharp.Engine.Commands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -8,6 +9,7 @@ namespace SearchSharp.Engine.Config;
 public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig 
     where TQueryData : class {
     public class Builder {
+        private readonly Dictionary<string, ICommand<TQueryData>> _commands = new();
         private readonly Dictionary<string, IRule<TQueryData>> _rules = new();
 
         private Expression<Func<TQueryData, string, bool>> _stringRule = (data, query) => data.ToString()!.Contains(query);
@@ -17,6 +19,7 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
         public Builder() {
         }
 
+        #region Rules
         public Builder AddRule(IRule<TQueryData> rule) {
             _rules[rule.Identifier] = rule;
             return this;
@@ -34,6 +37,18 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
     	    _stringRule = (data, query) => data.ToString()!.Contains(query);
             return this;
         }
+        #endregion
+
+        #region Commands
+        public Builder AddCommand(ICommand<TQueryData> command) {
+            _commands[command.Identifier] = command;
+            return this;
+        }
+        public Builder RemoveCommand(string commandIdentifier) {
+            if(_commands.ContainsKey(commandIdentifier)) _commands.Remove(commandIdentifier);
+            return this;
+        }
+        #endregion
 
         public Builder AddLogger(ILoggerFactory loggerFactory) {
             _loggerFactory = loggerFactory;
@@ -50,20 +65,23 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
         }
     
         public Config<TQueryData> Build() {
-            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler, _loggerFactory);
+            return new Config<TQueryData>(_commands, _rules, _stringRule, _defaultHandler, _loggerFactory);
         }
     }
 
+    public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
     public IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
     public Expression<Func<TQueryData, string, bool>> StringRule { get; }
     public Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
     public ILoggerFactory LoggerFactory { get; }
 
-    public Config(IReadOnlyDictionary<string, IRule<TQueryData>> rules,
+    public Config(IReadOnlyDictionary<string, ICommand<TQueryData>> commands,
+        IReadOnlyDictionary<string, IRule<TQueryData>> rules,
         Expression<Func<TQueryData, string, bool>> stringRule,
         Expression<Func<TQueryData, bool>> defaultHandler,
         ILoggerFactory loggerFactory) {
+        Commands = commands;
         Rules = rules;
         StringRule = stringRule;
         DefaultHandler = defaultHandler;

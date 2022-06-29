@@ -19,7 +19,6 @@ public class CommandExpressionParser {
     [Theory]
     [InlineData("#cmd #alt", 2)]
     [InlineData("#aaa #bbb #ccc #ddd", 4)]
-    [InlineData("#aaa #bbb #ccc #ddd", 4)]
     public void CanHandle_Many(string value, int total) {
         var result = QueryParser.CommandExpression.TryParse(value);
 
