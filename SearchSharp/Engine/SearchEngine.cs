@@ -15,31 +15,46 @@ using SearchExp = SearchSharp.Items.Expressions.Expression;
 
 public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : class {
+    public class Builder {
+        private readonly ISearchEngine<TQueryData>.IConfig _config;
+        private Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
+
+        public Builder(ISearchEngine<TQueryData>.IConfig config){
+            _config = config;
+        }
+
+        #region Providers
+        public Builder RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider){
+            _dataProviders[provider.Name] = provider;
+            return this;
+        }
+        public Builder RemoveProvider(string providerName) {
+            var contains = _dataProviders.ContainsKey(providerName);
+            if(contains) _dataProviders.Remove(providerName);
+            return this;
+        }
+        public Builder ClearProviders(){
+            _dataProviders.Clear();
+            return this;
+        }
+        #endregion
+
+        public SearchEngine<TQueryData> Build() {
+            return new SearchEngine<TQueryData>(_config, _dataProviders);
+        }
+    }
+
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
-    private readonly Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
+    private readonly IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
-    public SearchEngine(ISearchEngine<TQueryData>.IConfig config){
+    private SearchEngine(ISearchEngine<TQueryData>.IConfig config, IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> providers){
         _config = config;
         _evaluator = new Evaluator<TQueryData>(_config);
         _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
+        _dataProviders = providers;
     }
-
-    #region Providers
-    public SearchEngine<TQueryData> RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider){
-        _dataProviders[provider.Name] = provider;
-        return this;
-    }
-    public SearchEngine<TQueryData> RemoveProvider(ISearchEngine<TQueryData>.IDataProvider provider) {
-        return RemoveProvider(provider.Name);
-    }
-    public SearchEngine<TQueryData> RemoveProvider(string providerName) {
-        var contains = _dataProviders.ContainsKey(providerName);
-        if(contains) _dataProviders.Remove(providerName);
-        return this;
-    }
-    #endregion
 
     public IQueryable<TQueryData> Query(string dataProvider, string query){
         if(string.IsNullOrWhiteSpace(dataProvider)) throw new ArgumentException("Null or empty argument", nameof(dataProvider));

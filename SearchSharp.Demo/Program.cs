@@ -34,7 +34,7 @@ internal class Program
                 .WriteTo.Console()
                 .CreateLogger());
 
-        var memSe = new SearchEngine<Data>( new Config<Data>.Builder()
+        var memSe = new SearchEngine<Data>.Builder( new Config<Data>.Builder()
             .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
@@ -60,9 +60,10 @@ internal class Program
                 new Data { Id = 7,  Email = "jane@email.com", Description = "Jane Sheppard, a great explorer" },
                 new Data { Id = 9,  Email = "dave@addrs.com", Description = "Dave the viking, he is a very friendly barbarian" },
                 new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" }
-            }, "staticProvider");
+            }, "staticProvider")
+            .Build();
 
-        var dbSe = new SearchEngine<UserAccount>(new Config<UserAccount>.Builder()
+        var dbSe = new SearchEngine<UserAccount>.Builder(new Config<UserAccount>.Builder()
             .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Name.Contains(text) || d.Email.Contains(text))
@@ -111,7 +112,8 @@ internal class Program
                     }
                 }
             });
-        }), (ctx) => ctx.UserAccounts, "databaseProvider");
+        }), (ctx) => ctx.UserAccounts, "databaseProvider")
+        .Build();
 
 
         Console.WriteLine("---SearchEngine---");
