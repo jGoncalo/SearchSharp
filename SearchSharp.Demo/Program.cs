@@ -128,7 +128,7 @@ internal class Program
 
             if(query == "quit") break;
 
-            var results = dbSe.Query("databaseProvider", query);
+            var results = dbSe.Query(query, "databaseProvider");
 
             Console.WriteLine($"\n\nFound: {results.Count()} for query \"{query}\"\n\n");
             foreach(var res in results){

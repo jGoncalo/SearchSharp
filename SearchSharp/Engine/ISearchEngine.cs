@@ -25,5 +25,5 @@ public interface ISearchEngine<TQueryData> where TQueryData : class {
         ILoggerFactory LoggerFactory { get; }
     }
 
-    IQueryable<TQueryData> Query(string dataProvider, string query);
+    IQueryable<TQueryData> Query(string query, string? dataProvider = null);
 }

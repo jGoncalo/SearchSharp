@@ -18,14 +18,17 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     public class Builder {
         private readonly ISearchEngine<TQueryData>.IConfig _config;
         private Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
+        private string _defaultProvider = string.Empty;
 
         public Builder(ISearchEngine<TQueryData>.IConfig config){
             _config = config;
         }
 
         #region Providers
-        public Builder RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider){
+        public Builder RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider, bool isDefault = false){
             _dataProviders[provider.Name] = provider;
+
+            if(string.IsNullOrWhiteSpace(_defaultProvider) || isDefault) _defaultProvider = provider.Name;
             return this;
         }
         public Builder RemoveProvider(string providerName) {
@@ -37,30 +40,40 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             _dataProviders.Clear();
             return this;
         }
+        
+        public Builder SetDefaultProvider(string providerName) {
+            if(!_dataProviders.ContainsKey(providerName)) throw new ArgumentException($"Unknown provider - {providerName}", nameof(providerName));
+            _defaultProvider = providerName;
+            return this;
+        }
         #endregion
 
         public SearchEngine<TQueryData> Build() {
-            return new SearchEngine<TQueryData>(_config, _dataProviders);
+            if(_dataProviders.Values.Count() == 0) throw new BuildException("At least one data provider must be registered");
+            return new SearchEngine<TQueryData>(_config, _dataProviders, _defaultProvider);
         }
     }
 
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
     private readonly IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders;
+    private readonly string _defaultProvider;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
-    private SearchEngine(ISearchEngine<TQueryData>.IConfig config, IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> providers){
+    private SearchEngine(ISearchEngine<TQueryData>.IConfig config, 
+        IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> providers,
+        string defaultProvider){
         _config = config;
         _evaluator = new Evaluator<TQueryData>(_config);
         _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
         _dataProviders = providers;
+        _defaultProvider = defaultProvider;
     }
 
-    public IQueryable<TQueryData> Query(string dataProvider, string query){
-        if(string.IsNullOrWhiteSpace(dataProvider)) throw new ArgumentException("Null or empty argument", nameof(dataProvider));
+    public IQueryable<TQueryData> Query(string query, string? dataProvider = null){
         if(string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Null or empty argument", nameof(query));
 
-        var foundProvider = _dataProviders.TryGetValue(dataProvider, out var provider);
+        var foundProvider = _dataProviders.TryGetValue(dataProvider ?? _defaultProvider, out var provider);
         _logger.LogInformation("{Provider} [{Status}] -> {Query}",
             dataProvider,
             foundProvider ? "Found" : "Unknown",
