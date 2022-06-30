@@ -22,7 +22,7 @@ public static class QueryParser {
 
     #region String
     public static Parser<string> Identifier => 
-        from leading in Parse.CharExcept("0123456789&|^><=. \t\n-[]:~").AtLeastOnce().Text()
+        from leading in Parse.CharExcept("0123456789&|^><=. \t\n-[](){}:~").AtLeastOnce().Text()
         from trailing in Parse.LetterOrDigit.Many().Text()
         select leading + trailing;
     public static Parser<StringLiteral> String => (from empty in Parse.String("\"\"").Text().Token().Named("string-empty") select new StringLiteral(string.Empty))
@@ -130,12 +130,22 @@ public static class QueryParser {
     #endregion
 
     #region Commands
+    public static Parser<Command.Argument> Argument => from lit in (from num in Numeric select num as Literal).Or(from str in String select str as Literal) select new Command.Argument(lit);
+    public static Parser<Command.Argument[]> Arguments => (from arg in Argument
+        from comma in Parse.Char(',').Once().Text().Token()
+       from args in Arguments
+        select args.Append(arg).ToArray())
+        .Or(from arg in Argument select new [] { arg });
+
     public static Parser<Command>  Command => (from prefix in Parse.Char('#').Once().Named("command-prefix")
-        from directive in Directive
-        select new Command(directive.Identifier, directive))
+        from id in Identifier.Named("command-identifier")
+        from lP in Parse.Char('(').Once()
+        from args in Arguments.Named("command-arguments")
+        from rP in Parse.Char(')').Once()
+        select new Command(id, args))
         .Or(from prefix in Parse.Char('#').Once().Named("command-prefix")
             from id in Identifier.Named("command-identifier")
-            select new Command(id, null));
+            select new Command(id));
 
     #endregion
 

@@ -111,7 +111,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             LogicExpression compute => FromExpression(compute),
             StringExpression @string => FromExpression(@string),
 
-            _ => throw new Exception($"Unexpected query expression type: {query.GetType().Name}")
+            _ => throw new SearchExpception($"Unexpected query expression type: {query.GetType().Name}")
         };
         return new AssureQueryArgumentVisitor<TQueryData>().Assure(queryExpression);
     }

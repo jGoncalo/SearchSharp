@@ -1,11 +1,19 @@
 namespace SearchSharp.Items;
 
 public class Command : QueryItem {
-    public readonly string Identifier;
-    public readonly Directive? Directive;
+    public class Argument : QueryItem {
+        public readonly Literal Literal;
 
-    public Command(string identifer, Directive? directive) {
+        public Argument(Literal literal){
+            Literal = literal;
+        }
+    }
+
+    public readonly string Identifier;
+    public Argument[] Arguments;
+
+    public Command(string identifer, params Argument[] arguments) {
         Identifier = identifer;
-        Directive = directive;
+        Arguments = arguments ?? Array.Empty<Argument>();
     }
 }

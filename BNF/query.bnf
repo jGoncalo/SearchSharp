@@ -11,7 +11,12 @@
 <str> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""
 
-<cmd> ::= "#" <id>
+<arg> ::= <num> | <str>
+<args> ::= <args> "," <arg>
+	| <arg>
+
+<cmd> ::= "#" <id> "(" <args> ")"
+	| "#" <id>
 <cmdExpr> ::= <cmdExpr> <cmd>
     | <cmd>
 

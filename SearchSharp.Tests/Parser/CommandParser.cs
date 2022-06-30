@@ -13,13 +13,29 @@ public class CommandParser {
     [InlineData("cmd", false)]
     [InlineData("", false)]
     [InlineData(" ", false)]
-    public void CanHandle_NoLit(string value, bool success){
+    public void CanHandle_NoArgs(string value, bool success){
         var result = QueryParser.Command.TryParse(value);
 
         Assert.Equal(success, result.WasSuccessful);
         if(success){
-            Assert.Null(result.Value.Directive);
+            Assert.NotNull(result.Value.Arguments);
+            Assert.Empty(result.Value.Arguments);
             Assert.Equal(value.Remove(0, 1), result.Value.Identifier);
         }
+    }
+
+    [Theory]
+    [InlineData("#cmd", 0)]
+    [InlineData("#cmd(12)", 1)]
+    [InlineData("#cmd(12,22)", 2)]
+    [InlineData("#cmd(12,\"some\")", 2)]
+    [InlineData("#cmd(\"some\", 33)", 2)]
+    [InlineData("#cmd(\"some\", \"some\")", 2)]
+    public void CanHandle_Args(string value, int argCount){
+        var result = QueryParser.Command.TryParse(value);
+
+        Assert.True(result.WasSuccessful);
+        Assert.NotNull(result.Value.Arguments);
+        Assert.Equal(argCount, result.Value.Arguments.Length);
     }
 }
