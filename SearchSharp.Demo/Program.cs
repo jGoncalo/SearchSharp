@@ -1,6 +1,8 @@
 ﻿using SearchSharp.Engine;
 using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Rules;
+using SearchSharp.Items;
+using SearchSharp.Engine.Commands;
 using SearchSharp.Memory;
 using SearchSharp.EntityFramework;
 
@@ -15,18 +17,38 @@ using Microsoft.EntityFrameworkCore;
 namespace SearchSharp.Demo;
 
 public class Data {
+    public enum Provider {
+        Internal = 0,
+        External = 1
+    }
+
     public string Email { get; set; } = string.Empty;
     public int Id { get; set; } = 0;
     public string Description { get;set; } = string.Empty;
 
+    public Provider ProviderType { get; set; } = default;
+
     public override string ToString()
     {
-        return $"[{Id}] -> {Email} ::= {Description}";
+        return $"[{Id}@{ProviderType}] -> {Email} ::= {Description}";
     }
 }
 
 internal class Program
 {
+    static void PrintException(Exception exp) {
+        var cur = exp;
+        var depth = 1;
+
+        while(cur != null) {
+            var tabs = new string('\t', depth);
+            Console.WriteLine($"{tabs}->[{cur.GetType().Name}] {cur.Message}");
+
+            depth++;
+            cur = cur.InnerException;
+        }
+    }
+
     static void Main(string[] args)
     {
         var logFactory = new LoggerFactory()
@@ -38,6 +60,7 @@ internal class Program
             .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
+            //rules
             .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
                 .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Email.Contains(str.Value))
@@ -54,6 +77,15 @@ internal class Program
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Description == str.Value)
                 .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Description.Contains(str.Value))
                 .Build())
+
+            //Commands
+            .AddCommand(Command<Data>.AtProvider("internal", (query, args) => query.Where(data => data.ProviderType == Data.Provider.Internal)))
+            .AddCommand(Command<Data>.AtProvider("external", (query, args) => query.Where(data => data.ProviderType == Data.Provider.External)))
+            .AddCommand(Command<Data>.AtQuery("take", (query, args) => {
+                var takeCount = (args["count"].Literal as NumericLiteral)!.AsInt;
+                return query.Take(Math.Max(0, takeCount));
+            }, new Argument("count", LiteralType.Numeric)))
+            .AddCommand(Command<Data>.AtAll("fail", (query, args) => throw new Exception("Ops...")))
             .Build())
             .AddMemoryProvider(new [] {
                 new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },
@@ -62,58 +94,6 @@ internal class Program
                 new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" }
             }, "staticProvider")
             .Build();
-
-        var dbSe = new SearchEngine<UserAccount>.Builder(new Config<UserAccount>.Builder()
-            .AddLogger(logFactory)
-            .SetDefaultHandler(_ => false)
-            .SetStringRule((d, text) => d.Name.Contains(text) || d.Email.Contains(text))
-            .AddRule(new Rule<UserAccount>.Builder("email").AddDescription("Match user email")
-                .AddOperator(DirectiveComparisonOperator.Equal, (acc, text) => acc.Email == text.Value)
-                .AddOperator(DirectiveComparisonOperator.Similar, (acc, text) => acc.Email.Contains(text.Value))
-                .Build())
-            .Build())
-        .AddEntityFrameworkProvider<SimpleContext, UserAccount>(() => SimpleContext.MemoryContext(ctx => {
-            ctx.UserAccounts.AddRange(new [] {
-                new UserAccount {
-                    Id = Guid.NewGuid(),
-                    Name = "John Doe",
-                    Email = "john@email.com",
-                    IsEnabled = false
-                },
-                new UserAccount {
-                    Id = Guid.NewGuid(),
-                    Name = "Jane Doe",
-                    Email = "jane@email.com",
-                    IsEnabled = true,
-                    Addresses = new [] {
-                        new UserAddress {
-                            Id = Guid.NewGuid(),
-                            Street = "Some street, number 5",
-                            Zip = "5555-555"
-                        }
-                    }
-                },
-                new UserAccount {
-                    Id = Guid.NewGuid(),
-                    Name = "Jeff Doe",
-                    Email = "jeff@email.com",
-                    IsEnabled = false,
-                    Addresses = new [] {
-                        new UserAddress {
-                            Id = Guid.NewGuid(),
-                            Street = "Some aveneu, number 5",
-                            Zip = "5555-444"
-                        },
-                        new UserAddress {
-                            Id = Guid.NewGuid(),
-                            Street = "Some zone, number 5",
-                            Zip = "5555-333"
-                        }
-                    }
-                }
-            });
-        }), (ctx) => ctx.UserAccounts, "databaseProvider")
-        .Build();
 
 
         Console.WriteLine("---SearchEngine---");
@@ -128,11 +108,16 @@ internal class Program
 
             if(query == "quit") break;
 
-            var results = dbSe.Query(query, "databaseProvider");
+            try{
+                var results = memSe.Query(query);
 
-            Console.WriteLine($"\n\nFound: {results.Count()} for query \"{query}\"\n\n");
-            foreach(var res in results){
-                Console.WriteLine(res);
+                Console.WriteLine($"\n\nFound: {results.Count()} for query \"{query}\"\n\n");
+                foreach(var res in results){
+                    Console.WriteLine(res);
+                }
+            }
+            catch(Exception exp){
+                PrintException(exp);
             }
         }
     }

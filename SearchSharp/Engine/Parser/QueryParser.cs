@@ -149,7 +149,7 @@ public static class QueryParser {
 
     #endregion
 
-    public static Parser<Query> Query => (from commandExpr in CommandExpression from query in Query select new Query(query.Root, commandExpr.Commands))
+    public static Parser<Query> Query => (from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, commandExpr.Commands))
         .Or(from expr in LogicExpression select new Query(expr))
         .Or(from str in StringExpression select new Query(str));
 }

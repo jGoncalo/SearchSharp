@@ -100,7 +100,16 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         var afterQ = query;
         foreach(var command in commands) {
             if(_config.Commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
-                afterQ = cmd.Effect(afterQ);
+                var arguments = cmd.With(command.Arguments.Select(arg => arg.Literal).ToArray());
+                try{
+                    afterQ = cmd.Effect(query, arguments);
+                }
+                catch(Exception exp){
+                    var argumentStr = arguments.Count() == 0 ? string.Empty : arguments.Values
+                        .Select(arg => $"{arg.Identifier}[{arg.Literal.RawValue}]:{arg.Literal.Type}")
+                        .Aggregate((left, right) => $"{left},{right}");
+                    throw new CommandExecutionException($"Command execution failed: #{cmd.Identifier}({argumentStr})", exp);
+                }
             }
         }
         return afterQ;

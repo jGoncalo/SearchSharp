@@ -25,9 +25,13 @@ public class QueryParserTests {
         Assert.Empty(result.Value.Commands);
     }
 
-    [Fact]
-    public void CanHandle_Commands_String(){
-        var result = QueryParser.Query.TryParse("#preload #force this is a query");
+    [Theory]
+    [InlineData("#preload #force this is a query")]
+    [InlineData("#preload #force(2) this is a query")]
+    [InlineData("#preload(1) #force this is a query")]
+    [InlineData("#preload(1) #force(2) this is a query")]
+    public void CanHandle_Commands_String(string text){
+        var result = QueryParser.Query.TryParse(text);
 
         Assert.True(result.WasSuccessful);
         Assert.IsType<StringExpression>(result.Value.Root);
