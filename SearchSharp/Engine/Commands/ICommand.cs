@@ -1,4 +1,5 @@
 using SearchSharp.Items;
+using SearchSharp.Engine.Commands.Runtime;
 
 namespace SearchSharp.Engine.Commands;
 
@@ -7,7 +8,7 @@ public interface ICommand<TQueryData> where TQueryData : class {
     EffectiveIn EffectAt { get; }
     Argument[] Arguments { get; }
 
-    Func<IQueryable<TQueryData>, IReadOnlyDictionary<string, Argument.Runtime>, IQueryable<TQueryData>> Effect { get; }
+    Func<Parameters<TQueryData>, IQueryable<TQueryData>> Effect { get; }
 
-    IReadOnlyDictionary<string, Argument.Runtime> With(params Literal[] literals);
+    Runtime.Argument[] With(params Literal[] literals);
 }

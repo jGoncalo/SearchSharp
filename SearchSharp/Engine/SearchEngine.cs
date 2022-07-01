@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using SearchSharp.Items;
 using SearchSharp.Items.Expressions;
 using SearchSharp.Engine.Evaluators.Visitor;
+using SearchSharp.Engine.Commands.Runtime;
 using Sprache;
 using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;
@@ -73,16 +74,17 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     public IQueryable<TQueryData> Query(string query, string? dataProvider = null){
         if(string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Null or empty argument", nameof(query));
 
-        var foundProvider = _dataProviders.TryGetValue(dataProvider ?? _defaultProvider, out var provider);
-        _logger.LogInformation("{Provider} [{Status}] -> {Query}",
-            dataProvider,
-            foundProvider ? "Found" : "Unknown",
-            query);
-        if(!foundProvider || provider == null) throw new Exception($"Data provider \"{dataProvider}\" not registred");
         try{
             var parseResult = QueryParser.Query.TryParse(query);
-            if(!parseResult.WasSuccessful) throw new Exception(parseResult.Message);
+            if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
             var parsedQuery = parseResult.Value;
+
+            var foundProvider = _dataProviders.TryGetValue(dataProvider ?? _defaultProvider, out var provider);
+            _logger.LogInformation("{Provider} [{Status}] -> {Query}",
+                dataProvider,
+                foundProvider ? "Found" : "Unknown",
+                query);
+            if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{dataProvider}\" not registred");
 
             var queryLambda = FromQuery(parsedQuery);
             _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
@@ -102,10 +104,10 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             if(_config.Commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
                 var arguments = cmd.With(command.Arguments.Select(arg => arg.Literal).ToArray());
                 try{
-                    afterQ = cmd.Effect(query, arguments);
+                    afterQ = cmd.Effect(new Parameters<TQueryData>(query, arguments));
                 }
                 catch(Exception exp){
-                    var argumentStr = arguments.Count() == 0 ? string.Empty : arguments.Values
+                    var argumentStr = arguments.Count() == 0 ? string.Empty : arguments
                         .Select(arg => $"{arg.Identifier}[{arg.Literal.RawValue}]:{arg.Literal.Type}")
                         .Aggregate((left, right) => $"{left},{right}");
                     throw new CommandExecutionException($"Command execution failed: #{cmd.Identifier}({argumentStr})", exp);

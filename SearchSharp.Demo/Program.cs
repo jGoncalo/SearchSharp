@@ -60,6 +60,7 @@ internal class Program
             .AddLogger(logFactory)
             .SetDefaultHandler(_ => false)
             .SetStringRule((d, text) => d.Description.Contains(text))
+            
             //rules
             .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
@@ -79,13 +80,13 @@ internal class Program
                 .Build())
 
             //Commands
-            .AddCommand(Command<Data>.AtProvider("internal", (query, args) => query.Where(data => data.ProviderType == Data.Provider.Internal)))
-            .AddCommand(Command<Data>.AtProvider("external", (query, args) => query.Where(data => data.ProviderType == Data.Provider.External)))
-            .AddCommand(Command<Data>.AtQuery("take", (query, args) => {
+            .AddCommand(Command<Data>.AtProvider("internal", (args) => args.SourceQuery.Where(data => data.ProviderType == Data.Provider.Internal)))
+            .AddCommand(Command<Data>.AtProvider("external", (args) => args.SourceQuery.Where(data => data.ProviderType == Data.Provider.External)))
+            .AddCommand(Command<Data>.AtQuery("take", (args) => {
                 var takeCount = (args["count"].Literal as NumericLiteral)!.AsInt;
-                return query.Take(Math.Max(0, takeCount));
+                return args.SourceQuery.Take(Math.Max(0, takeCount));
             }, new Argument("count", LiteralType.Numeric)))
-            .AddCommand(Command<Data>.AtAll("fail", (query, args) => throw new Exception("Ops...")))
+            .AddCommand(Command<Data>.AtAll("fail", (args) => throw new Exception("Ops...")))
             .Build())
             .AddMemoryProvider(new [] {
                 new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },
