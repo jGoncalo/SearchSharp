@@ -1,11 +1,8 @@
 ﻿using SearchSharp.Engine;
 using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Rules;
-using SearchSharp.Items;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Memory;
-using SearchSharp.EntityFramework;
-
 using SearchSharp.Demo.EF.Context;
 using SearchSharp.Demo.EF.Tables;
 
@@ -13,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 
 using Microsoft.EntityFrameworkCore;
+using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Demo;
 

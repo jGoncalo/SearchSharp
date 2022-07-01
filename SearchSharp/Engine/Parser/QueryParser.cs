@@ -1,8 +1,9 @@
+using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Expressions;
+
 namespace SearchSharp.Engine.Parser;
 
 using SearchSharp;
-using SearchSharp.Items;
-using SearchSharp.Items.Expressions;
 using Sprache;
 
 public static class QueryParser {

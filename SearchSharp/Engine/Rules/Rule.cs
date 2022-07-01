@@ -1,17 +1,7 @@
-using SearchSharp.Items;
 using System.Linq.Expressions;
+using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Rules;
-
-public interface IRule<TQueryData> where TQueryData : class {
-    string Identifier { get; } 
-    string Description { get; }
-
-    IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> ComparisonStrRules { get; }
-    IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> ComparisonNumRules { get; }
-    IReadOnlyDictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> NumericRules { get; }
-    Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule { get; }
-}
 
 public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
     public class Builder {
@@ -64,14 +54,14 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
     public Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule { get; }
 
     private Rule(string identifier, string description,
-        Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> comparisonStrRules,
-        Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> comparisonNumRules,
-        Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> numericRules,
+        IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> comparisonStrRules,
+        IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> comparisonNumRules,
+        IReadOnlyDictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> numericRules,
         Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? rangeRule) {
         Identifier = identifier;
         Description = description;
         ComparisonStrRules = comparisonStrRules;
-        ComparisonNumRules = comparisonNumRules;
+        ComparisonNumRules = comparisonNumRules ?? throw new ArgumentNullException(nameof(comparisonNumRules));
         NumericRules = numericRules;
         RangeRule = rangeRule;
     }

@@ -1,3 +1,6 @@
+using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Expressions;
+
 namespace SearchSharp.Engine;
 
 using SearchSharp.Exceptions;
@@ -5,14 +8,12 @@ using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Evaluators;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using SearchSharp.Items;
-using SearchSharp.Items.Expressions;
 using SearchSharp.Engine.Evaluators.Visitor;
 using SearchSharp.Engine.Commands.Runtime;
 using Sprache;
 using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;
-using SearchExp = SearchSharp.Items.Expressions.Expression;
+using SearchExp = Expression;
 
 public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : class {
@@ -136,7 +137,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     }
     private Expression<Func<TQueryData, bool>> FromExpression(LogicExpression exp){
         return exp switch {
-            Items.Expressions.BinaryExpression logic => FromExpression(logic),
+            Parser.Components.Expressions.BinaryExpression logic => FromExpression(logic),
             NegatedExpression neg => FromExpression(neg),
             DirectiveExpression dir => FromExpression(dir),
             SearchExp => FromExpression(exp),
@@ -144,7 +145,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             _ => throw new Exception($"Unexpected query expression type: {exp.GetType().Name}")
         };
     }
-    private Expression<Func<TQueryData, bool>> FromExpression(Items.Expressions.BinaryExpression exp){
+    private Expression<Func<TQueryData, bool>> FromExpression(Parser.Components.Expressions.BinaryExpression exp){
         var leftLambda = FromExpression(exp.Left);
         var rightLambda = FromExpression(exp.Right);
 

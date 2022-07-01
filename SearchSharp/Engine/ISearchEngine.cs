@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
-using SearchSharp.Items;
 using SearchSharp.Engine.Rules;
 using SearchSharp.Engine.Commands;
 using Microsoft.Extensions.Logging;
+using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine;
 

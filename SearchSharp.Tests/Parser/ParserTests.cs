@@ -1,8 +1,9 @@
+using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Expressions;
+
 namespace SearchSharp.Tests.Parser;
 
 using SearchSharp.Engine.Parser;
-using SearchSharp.Items;
-using SearchSharp.Items.Expressions;
 using SearchSharp;
 using Sprache;
 using System.Text.RegularExpressions;

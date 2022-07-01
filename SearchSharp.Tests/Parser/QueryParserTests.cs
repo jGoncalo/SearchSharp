@@ -1,5 +1,5 @@
 using SearchSharp.Engine.Parser;
-using SearchSharp.Items.Expressions;
+using SearchSharp.Engine.Parser.Components.Expressions;
 using Sprache;
 
 namespace SearchSharp.Tests.Parser;
