@@ -1,9 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Title>Search Sharp</Title>
+    <Authors>Gonçalo Rodrigues</Authors>
+    <Description>Declarable query language for human search operations</Description>
+    <Copyright>MIT</Copyright>
+    <RepositoryUrl>https://github.com/jGoncalo/SearchSharp</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageTags>Query Search Lookup Data</PackageTags>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

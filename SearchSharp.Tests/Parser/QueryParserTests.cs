@@ -39,12 +39,16 @@ public class QueryParserTests {
         Assert.NotEmpty(result.Value.Commands);
     }
 
-    [Fact]
-    public void CanHandle_Commands_Logic(){
-        var result = QueryParser.Query.TryParse("#preload #force length[2..]");
+    [Theory]
+    [InlineData("a great description", ExpType.String)]
+    [InlineData("!(id=2 | email~\"industry.com\")", ExpType.Negated)]
+    [InlineData("length[2..]", ExpType.Directive)]
+    public void CanHandle_Commands_Logic(string postfix, ExpType expectedRootType){
+        var result = QueryParser.Query.TryParse("#preload #force " + postfix);
 
         Assert.True(result.WasSuccessful);
-        Assert.IsAssignableFrom<LogicExpression>(result.Value.Root);
+        Assert.Equal(expectedRootType, result.Value.Root.Type);
+        
         Assert.NotNull(result.Value.Commands);
         Assert.NotEmpty(result.Value.Commands);
     }

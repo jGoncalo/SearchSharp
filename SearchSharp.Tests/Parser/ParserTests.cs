@@ -27,7 +27,6 @@ public class ParserTests
     [InlineData("ab", true)]
     [InlineData("a2", true)]
     [InlineData("a22", true)]
-    [InlineData("_22d", true)]
     public void IdentifierParser(string text, bool shouldWork)
     {
         var output = QueryParser.Identifier.TryParse(text);
@@ -117,8 +116,8 @@ public class ParserTests
         var output = QueryParser.String.TryParse($"\"{value}\"");
 
         Assert.True(output.WasSuccessful);
-        Assert.Equal(value.Trim(), output.Value.Value);
-        Assert.Equal(value.Trim(), output.Value.RawValue);
+        Assert.Equal(value, output.Value.Value);
+        Assert.Equal(value, output.Value.RawValue);
 
         output = QueryParser.String.TryParse(value);
         
@@ -210,7 +209,7 @@ public class ParserTests
     public void RangeDirectiveOperator_Parser(string lower, string upper){
         var result = QueryParser.RangeDirectiveOperator.TryParse($"[{lower}..{upper}]");
         var numRegEx = new Regex("[0-9]+(\\.[0-9]+)?");
-
+        
         if(string.IsNullOrWhiteSpace(lower) && string.IsNullOrWhiteSpace(upper)) Assert.False(result.WasSuccessful);
         else if((string.IsNullOrWhiteSpace(lower) || numRegEx.IsMatch(lower)) && (string.IsNullOrWhiteSpace(upper) || numRegEx.IsMatch(upper))){
             Assert.True(result.WasSuccessful);
@@ -219,13 +218,13 @@ public class ParserTests
                 var lowerFloat = float.Parse(lower);
                 Assert.NotNull(result.Value.LowerBound);
                 Assert.Equal(lowerFloat, result.Value.LowerBound!.AsFloat);
-            } else Assert.Null(result.Value.LowerBound);
+            } else Assert.Equal(string.Empty, result.Value.LowerBound.RawValue);
 
             if(!string.IsNullOrWhiteSpace(upper)){
                 var upperFloat = float.Parse(upper);
                 Assert.NotNull(result.Value.UpperBound);
                 Assert.Equal(upperFloat, result.Value.UpperBound!.AsFloat);
-            } else Assert.Null(result.Value.UpperBound);
+            } else Assert.Equal(string.Empty, result.Value.UpperBound.RawValue);
         }
         else Assert.False(result.WasSuccessful);
     }
@@ -269,8 +268,14 @@ public class ParserTests
                     Assert.Equal("1", num.OperatorSpec.Value.RawValue);
                     break;
                 case RangeDirective range:
-                    Assert.Equal("1", range.OperatorSpec.LowerBound?.RawValue ?? "1");
-                    Assert.Equal("10", range.OperatorSpec.UpperBound?.RawValue ?? "10");
+                    var lowerBound = range.OperatorSpec.LowerBound?.RawValue;
+                    var upperBound = range.OperatorSpec.UpperBound?.RawValue;
+
+                    if (string.IsNullOrEmpty(lowerBound)) lowerBound = "1";
+                    if (string.IsNullOrEmpty(upperBound)) upperBound = "10";
+                    
+                    Assert.Equal("1", lowerBound);
+                    Assert.Equal("10", upperBound);
                     break;
                 default:
                     Assert.True(false, "unexpected directive class");
