@@ -139,7 +139,8 @@ public static class QueryParser {
         .Or(from neg in Parse.Char('!').Once().Named("rule-neg-sign")
             from lExp in RuleExpression.Token().Named("rule-neg-exp")
             select new NegatedExpression(lExp))
-        .Or(from dir in Directive.Named("rule-directive") select new DirectiveExpression(dir));
+        .Or(from dir in Directive.Named("rule-directive") select new DirectiveExpression(dir))
+        .Or(from str in String.Named("rule-string") select new StringExpression(str.Value));
 
     public static Parser<StringExpression> StringExpression => (from empty in Parse.String("\"\"").Once() select new StringExpression(string.Empty))
         .Or(from leading in Parse.Char('"').Once()

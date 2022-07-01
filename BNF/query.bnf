@@ -37,6 +37,7 @@
 <ruleExpr> ::= "(" <ruleExpr> ")"
     | "!" <ruleExpr>
     | <dir>
+    | <str>
 
 <strexp> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""

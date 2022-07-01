@@ -120,8 +120,8 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
     private Expression<Func<TQueryData, bool>> FromQuery(Query query) {
         var queryExpression = query.Root switch {
-            LogicExpression compute => FromExpression(compute),
             StringExpression @string => FromExpression(@string),
+            LogicExpression compute => FromExpression(compute),
 
             _ => throw new SearchExpception($"Unexpected query expression type: {query.GetType().Name}")
         };
@@ -140,6 +140,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             Parser.Components.Expressions.BinaryExpression logic => FromExpression(logic),
             NegatedExpression neg => FromExpression(neg),
             DirectiveExpression dir => FromExpression(dir),
+            StringExpression str => FromExpression(str),
             SearchExp => FromExpression(exp),
 
             _ => throw new Exception($"Unexpected query expression type: {exp.GetType().Name}")
