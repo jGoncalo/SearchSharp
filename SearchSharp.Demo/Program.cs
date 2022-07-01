@@ -78,13 +78,29 @@ internal class Program
                 .Build())
 
             //Commands
-            .AddCommand(Command<Data>.AtProvider("internal", (args) => args.SourceQuery.Where(data => data.ProviderType == Data.Provider.Internal)))
-            .AddCommand(Command<Data>.AtProvider("external", (args) => args.SourceQuery.Where(data => data.ProviderType == Data.Provider.External)))
-            .AddCommand(Command<Data>.AtQuery("take", (args) => {
-                var takeCount = (args["count"].Literal as NumericLiteral)!.AsInt;
-                return args.SourceQuery.Take(Math.Max(0, takeCount));
-            }, new Argument("count", LiteralType.Numeric)))
-            .AddCommand(Command<Data>.AtAll("fail", (args) => throw new Exception("Ops...")))
+            .AddCommand(new Command<Data>.Builder("internal")
+                .SetRuntime(EffectiveIn.Provider)
+                .SetEffect(arg => arg.SourceQuery.Where(d => d.ProviderType == Data.Provider.Internal))
+                .Build()
+            )
+            .AddCommand(new Command<Data>.Builder("external")
+                .SetRuntime(EffectiveIn.Provider)
+                .SetEffect(arg => arg.SourceQuery.Where(d => d.ProviderType == Data.Provider.External))
+                .Build()
+            )
+            .AddCommand(new Command<Data>.Builder("take")
+                .SetRuntime(EffectiveIn.Query)
+                .AddArgument("count", LiteralType.Numeric)
+                .SetEffect(arg => {
+                    var takeCount = (arg["count"].Literal as NumericLiteral)!.AsInt;
+                    return arg.SourceQuery.Take(takeCount);
+                })
+                .Build()
+            )
+            .AddCommand(new Command<Data>.Builder("fail")
+                .SetRuntime(EffectiveIn.Query | EffectiveIn.Provider)
+                .SetEffect(arg => throw new Exception("Ops..."))
+                .Build())
             .Build())
             .AddMemoryProvider(new [] {
                 new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },

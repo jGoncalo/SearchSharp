@@ -5,6 +5,53 @@ using SearchSharp.Exceptions;
 namespace SearchSharp.Engine.Commands;
 
 public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : class {
+    public class Builder
+    {
+        public readonly string Identifier;
+        private EffectiveIn _effectiveIn = EffectiveIn.None;
+        private readonly List<Argument> _arguments = new();
+        private Func<Parameters<TQueryData>, IQueryable<TQueryData>> _effect = arg => arg.SourceQuery;
+
+        public Builder(string identifier) {
+            Identifier = identifier;
+        }
+
+        public Builder SetRuntime(EffectiveIn effectiveIn) {
+            _effectiveIn = effectiveIn;
+            return this;
+        }
+        public Builder AddArgument(string identifier, LiteralType type) {
+            _arguments.Add(new Argument(identifier, type));
+            return this;
+        }
+
+        public Builder SetEffect(Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect) {
+            _effect = effect;
+            return this;
+        }
+
+        public Builder ResetEffect()
+        {
+            _effect = arg => arg.SourceQuery;
+            return this;
+        }
+
+        public Command<TQueryData> Build() {
+            var argForm = new HashSet<string>();
+            var argList = new List<Argument>();
+
+            foreach (var arg in _arguments) {
+                if(argForm.Contains(arg.Identifier)) continue;
+                
+                argList.Add(arg);
+                argForm.Add(arg.Identifier);
+            }
+            
+            return new Command<TQueryData>(Identifier, _effectiveIn, _effect, 
+                argList.ToArray());
+        }
+    }
+
     public string Identifier { get; }
     public EffectiveIn EffectAt { get; }
     public Argument[] Arguments { get; }
@@ -15,19 +62,6 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : class
         EffectAt = effectAt;
         Effect = effect;
         Arguments = arguments ?? Array.Empty<Argument>();
-    }
-
-    public static Command<TQueryData> AtProvider(string identifier, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, 
-        params Argument[] arguments) {
-        return new Command<TQueryData>(identifier, EffectiveIn.Provider, effect, arguments);
-    }
-    public static Command<TQueryData> AtQuery(string identifier, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, 
-        params Argument[] arguments) {
-        return new Command<TQueryData>(identifier, EffectiveIn.Query, effect, arguments);
-    }
-    public static Command<TQueryData> AtAll(string identifier, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, 
-        params Argument[] arguments) {
-        return new Command<TQueryData>(identifier, EffectiveIn.Provider | EffectiveIn.Query, effect, arguments);
     }
 
     public Runtime.Argument[] With(params Literal[] literals){
