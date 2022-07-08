@@ -10,8 +10,24 @@ public abstract class Literal : QueryItem {
     }
 }
 
+public class BooleanLiteral : Literal {
+    public readonly bool Value;
+
+    public BooleanLiteral(bool value) : base(LiteralType.Boolean, value.ToString()) {
+        Value = value;
+    }
+}
+
 public class StringLiteral : Literal {
     public readonly string Value;
+
+    public TEnum AsEnum<TEnum>() where TEnum : Enum {
+        var couldParse = Enum.TryParse(typeof(TEnum), Value, true, out var @enum);
+        if (couldParse && @enum is TEnum val) {
+            return val;
+        }
+        return default!;
+    }
 
     public StringLiteral(string value) : base(LiteralType.String, value) {
         Value = value;
@@ -22,6 +38,10 @@ public class NumericLiteral : Literal {
 
     public int AsInt { get; }
     public float AsFloat { get; }
+
+    public TEnum AsEnum<TEnum>() where TEnum : Enum {
+        return (TEnum) (object) AsInt;
+    }
 
     private NumericLiteral(string rawValue, bool isFloat) : base(LiteralType.Numeric, rawValue) {
         if(isFloat) {

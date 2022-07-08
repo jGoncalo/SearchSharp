@@ -10,7 +10,8 @@ public enum EffectiveIn {
 
 public enum LiteralType {
     Numeric = 0,
-    String = 1
+    String = 1,
+    Boolean = 2
 }
 
 public enum ExpType {

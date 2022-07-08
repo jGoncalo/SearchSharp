@@ -28,6 +28,11 @@ public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where 
         var visited = new ReplaceLiteralVisitor<TQueryData, NumericLiteral>(literal).Replace(numericRule);
         return visited;
     }
+    private static Expression<Func<TQueryData, bool>> ComposeComparison(Expression<Func<TQueryData, BooleanLiteral, bool>> booleanRule,
+        BooleanLiteral literal) {
+        var visited = new ReplaceLiteralVisitor<TQueryData, BooleanLiteral>(literal).Replace(booleanRule);
+        return visited;
+    }
     private static Expression<Func<TQueryData, bool>> ComposeNumeric(Expression<Func<TQueryData, NumericLiteral, bool>> numericRule,
         NumericLiteral literal){
         var visited = new ReplaceLiteralVisitor<TQueryData, NumericLiteral>(literal).Replace(numericRule);
@@ -60,6 +65,10 @@ public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where 
             case NumericLiteral numLit:
                 lambda = rule!.ComparisonNumRules.TryGetValue(directive.OperatorType, out var exactNumRule) ?
                     ComposeComparison(exactNumRule, numLit) : DefaultHandler;
+                break;
+            case BooleanLiteral boolLit:
+                lambda = rule!.ComparisonBoolRules.TryGetValue(directive.OperatorType, out var exactBoolRule) ?
+                    ComposeComparison(exactBoolRule, boolLit) : DefaultHandler;
                 break;
             default:
                 lambda = DefaultHandler;

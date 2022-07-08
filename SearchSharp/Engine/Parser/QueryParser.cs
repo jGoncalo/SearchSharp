@@ -7,6 +7,12 @@ using SearchSharp;
 using Sprache;
 
 public static class QueryParser {
+    #region Boolean
+    public static Parser<BooleanLiteral> Bool => 
+        (from @true in Parse.IgnoreCase("true").Once() select new BooleanLiteral(true))
+        .Or(from @false in Parse.IgnoreCase("false").Once() select new BooleanLiteral(false));
+    #endregion
+    
     #region Numeric
     public static Parser<NumericLiteral> Int => 
         from sign in Parse.Char('-').Optional().Named("sign")
@@ -81,7 +87,9 @@ public static class QueryParser {
     public static Parser<Directive> Directive => 
         (from id in Identifier.Named("directive-identifier")
         from op in RuleDirectiveOp.Named("directive-operator")
-        from lit in (from str in String select str as Literal).Or(from num in Numeric select num as Literal).Named("directive-value")
+        from lit in (from str in String select str as Literal)
+                        .Or(from num in Numeric select num as Literal)
+                        .Or(from @bool in Bool select @bool as Literal).Named("directive-value")
         select new ComparisonDirective(op, id, lit) as Directive)
         .Or(from id in Identifier.Named("directive-identifier")
             from op in RangeDirectiveOperator.Named("directive-num-operator")
@@ -92,7 +100,10 @@ public static class QueryParser {
     #endregion
     
     #region Commands
-    public static Parser<Command.Argument> Argument => from lit in (from num in Numeric select num as Literal).Or(from str in String select str as Literal) select new Command.Argument(lit);
+    public static Parser<Command.Argument> Argument => from lit in (from num in Numeric select num as Literal)
+                                                                        .Or(from str in String select str as Literal)
+                                                                        .Or(from @bool in Bool select @bool as Literal)
+        select new Command.Argument(lit);
     public static Parser<Command.Argument[]> Arguments => (from arg in Argument
             from comma in Parse.Char(',').Once().Text().Token()
             from args in Arguments

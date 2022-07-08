@@ -10,6 +10,7 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
 
         private readonly Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> _comparisonStrRules = new();
         private readonly Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> _comparisonNumRules = new();
+        private readonly Dictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, BooleanLiteral, bool>>> _comparisonBoolRules = new();
         private readonly Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> _numericRules = new();
         private Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? _rangeRule;
 
@@ -30,6 +31,10 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
             _comparisonNumRules[@operator] = rule;
             return this;
         }
+        public Builder AddOperator(DirectiveComparisonOperator @operator, Expression<Func<TQueryData, BooleanLiteral, bool>> rule){
+            _comparisonBoolRules[@operator] = rule;
+            return this;
+        }
 
         public Builder AddOperator(DirectiveNumericOperator @operator, Expression<Func<TQueryData, NumericLiteral, bool>> rule) {
             _numericRules[@operator] = rule;
@@ -42,7 +47,7 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
         }
 
         public Rule<TQueryData> Build() {
-            return new Rule<TQueryData>(Identifier, _description, _comparisonStrRules, _comparisonNumRules, _numericRules, _rangeRule);
+            return new Rule<TQueryData>(Identifier, _description, _comparisonStrRules, _comparisonNumRules, _comparisonBoolRules, _numericRules, _rangeRule);
         }
     }
 
@@ -50,18 +55,21 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
     public string Description { get; }
     public IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> ComparisonStrRules { get; }
     public IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> ComparisonNumRules { get; }
+    public IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, BooleanLiteral, bool>>> ComparisonBoolRules { get; }
     public IReadOnlyDictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> NumericRules { get; }
     public Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? RangeRule { get; }
 
     private Rule(string identifier, string description,
         IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, StringLiteral, bool>>> comparisonStrRules,
         IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> comparisonNumRules,
+        IReadOnlyDictionary<DirectiveComparisonOperator, Expression<Func<TQueryData, BooleanLiteral, bool>>> comparisonBoolRules,
         IReadOnlyDictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> numericRules,
         Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? rangeRule) {
         Identifier = identifier;
         Description = description;
         ComparisonStrRules = comparisonStrRules;
-        ComparisonNumRules = comparisonNumRules ?? throw new ArgumentNullException(nameof(comparisonNumRules));
+        ComparisonNumRules = comparisonNumRules;
+        ComparisonBoolRules = comparisonBoolRules;
         NumericRules = numericRules;
         RangeRule = rangeRule;
     }

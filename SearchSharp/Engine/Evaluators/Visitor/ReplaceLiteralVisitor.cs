@@ -18,16 +18,12 @@ internal class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor
         var afterVisit = Visit(expression) as Expression<Func<TQueryData, TLiteral, bool>>;
 
         return Expression.Lambda<Func<TQueryData, bool>>(afterVisit!.Body,
-            afterVisit.Parameters.Where(p => p.Type == typeof(TQueryData)).First());
+            afterVisit.Parameters.First(p => p.Type == typeof(TQueryData)));
     }
 
-    protected override Expression VisitMember(MemberExpression node)
-    {
-        if(node.Member.DeclaringType == typeof(TLiteral)){
-            return ReplaceLiteral(node);
-        }
-
-        return base.VisitMember(node);
+    protected override Expression VisitMember(MemberExpression node) {
+        return node.Member.DeclaringType == typeof(TLiteral) ? 
+            ReplaceLiteral(node) : base.VisitMember(node);
     }
 
     private Expression ReplaceLiteral(MemberExpression member){

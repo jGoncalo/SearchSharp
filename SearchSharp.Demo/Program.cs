@@ -23,12 +23,13 @@ public class Data {
     public string Email { get; set; } = string.Empty;
     public int Id { get; set; } = 0;
     public string Description { get;set; } = string.Empty;
+    public bool HasAuth { get; set; } = false;
 
     public Provider ProviderType { get; set; } = default;
 
     public override string ToString()
     {
-        return $"[{Id}@{ProviderType}] -> {Email} ::= {Description}";
+        return $"[{Id}@{ProviderType}] -> {Email} [hasAuth:{HasAuth}]::= {Description}";
     }
 }
 
@@ -63,6 +64,9 @@ internal class Program
             .AddRule(new Rule<Data>.Builder("email").AddDescription("Match with stored email")
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, str) => data.Email == str.Value)
                 .AddOperator(DirectiveComparisonOperator.Similar, (data, str) => data.Email.Contains(str.Value))
+                .Build())
+            .AddRule(new Rule<Data>.Builder("hasAuth")
+                .AddOperator(DirectiveComparisonOperator.Equal, (data, @bool) => data.HasAuth == (bool) @bool.Value)
                 .Build())
             .AddRule(new Rule<Data>.Builder("id")
                 .AddOperator(DirectiveComparisonOperator.Equal, (data, id) => data.Id == id.AsInt)
@@ -106,7 +110,8 @@ internal class Program
                 new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },
                 new Data { Id = 7,  Email = "jane@email.com", Description = "Jane Sheppard, a great explorer" },
                 new Data { Id = 9,  Email = "dave@addrs.com", Description = "Dave the viking, he is a very friendly barbarian" },
-                new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" }
+                new Data { Id = 13, Email = "admin@zone.com", Description = "Always arrives at 1° place in eating contests" },
+                new Data { Id = 17, Email = "sec@safety.com", Description = "Trusts no one", HasAuth = true}
             }, "staticProvider")
             .Build();
 

@@ -1,5 +1,6 @@
 #https://bnfplayground.pauliankline.com/
 
+<bool> ::= "True"|"False"
 <bop> ::= "|" | "&" | "^"
 <id> ::= [a-z] ([a-z] | [0-9])*
 <float> ::= "-" [0-9]+ "." [0-9]+
@@ -11,7 +12,7 @@
 <str> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""
 
-<arg> ::= <num> | <str>
+<arg> ::= <num> | <str> | <bool>
 <args> ::= <args> "," <arg>
 	| <arg>
 
@@ -25,7 +26,7 @@
 <dirRangeOp> ::= "[" <num> ".." <num> "]"
 	| "[" <num> "..]"
     | "[.." <num> "]"
-<dir> ::= <id> <dirOp> (<str> | <num>)
+<dir> ::= <id> <dirOp> (<str> | <num> | <bool>)
     | <id> <dirNumbOp>
     | <id> <dirRangeOp>
 
