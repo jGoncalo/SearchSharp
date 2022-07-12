@@ -20,7 +20,13 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : class
             _effectiveIn = effectiveIn;
             return this;
         }
-        public Builder AddArgument(string identifier, LiteralType type) {
+        public Builder AddArgument<TLiteral>(string identifier) where TLiteral : Literal {
+            LiteralType type;
+            if (typeof(TLiteral) == typeof(BooleanLiteral)) type = LiteralType.Boolean;
+            else if (typeof(TLiteral) == typeof(StringLiteral)) type = LiteralType.String;
+            else if (typeof(TLiteral) == typeof(NumericLiteral)) type = LiteralType.Numeric;
+            else throw new SearchExpception($"Unexpected literal type: {typeof(TLiteral).Name} when building rule");
+            
             _arguments.Add(new Argument(identifier, type));
             return this;
         }

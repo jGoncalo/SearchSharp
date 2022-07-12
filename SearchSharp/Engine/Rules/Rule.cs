@@ -23,16 +23,12 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
             return this;
         }
 
-        public Builder AddOperator(DirectiveComparisonOperator @operator, Expression<Func<TQueryData, StringLiteral, bool>> rule){
-            _comparisonStrRules[@operator] = rule;
-            return this;
-        }
-        public Builder AddOperator(DirectiveComparisonOperator @operator, Expression<Func<TQueryData, NumericLiteral, bool>> rule){
-            _comparisonNumRules[@operator] = rule;
-            return this;
-        }
-        public Builder AddOperator(DirectiveComparisonOperator @operator, Expression<Func<TQueryData, BooleanLiteral, bool>> rule){
-            _comparisonBoolRules[@operator] = rule;
+        public Builder AddOperator<TLiteral>(DirectiveComparisonOperator @operator, Expression<Func<TQueryData, TLiteral, bool>> rule) 
+            where TLiteral : Literal {
+            if (typeof(TLiteral) == typeof(BooleanLiteral)) _comparisonBoolRules[@operator] = (rule as Expression<Func<TQueryData, BooleanLiteral, bool>>)!;
+            else if (typeof(TLiteral) == typeof(StringLiteral)) _comparisonStrRules[@operator] = (rule as Expression<Func<TQueryData, StringLiteral, bool>>)!;
+            else if (typeof(TLiteral) == typeof(NumericLiteral)) _comparisonNumRules[@operator] = (rule as Expression<Func<TQueryData, NumericLiteral, bool>>)!;
+
             return this;
         }
 

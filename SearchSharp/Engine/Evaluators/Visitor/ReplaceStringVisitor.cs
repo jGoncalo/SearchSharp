@@ -14,11 +14,11 @@ internal class ReplaceStringVisitor<TQueryData> : ExpressionVisitor
 
     public Expression<Func<TQueryData, bool>> Replace(Expression<Func<TQueryData, string, bool>> expression)  
     {  
-        _target = expression.Parameters.Where(p => p.Type == typeof(string)).First()!;
+        _target = expression.Parameters.First(p => p.Type == typeof(string));
         var afterVisit = Visit(expression.Body);
 
         return Expression.Lambda<Func<TQueryData, bool>>(afterVisit!,
-            expression.Parameters.Where(p => p.Type == typeof(TQueryData)).First());
+            expression.Parameters.First(p => p.Type == typeof(TQueryData)));
     }
 
     public override Expression? Visit(Expression? node)
