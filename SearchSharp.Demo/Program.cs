@@ -119,7 +119,12 @@ internal class Program
                 new Data { Id = 17, Email = "sec@safety.com", Description = "Trusts no one", HasAuth = true},
                 new Data { Id = 18, Email = "zoe@mnstrs.com", Description = "Wraith like teeth", ProviderType = Data.Provider.External},
                 new Data { Id = 22, Email = "liv@safety.com", Description = "PowerOn people!", ProviderType = Data.Provider.External}
-            }, "staticProvider")
+            }, "users")
+            .AddMemoryProvider(new [] {
+                new Data {Id = 100, Email = "frank@inspection.com", Description = "Hard but fair", HasAuth = true },
+                new Data {Id = 101, Email = "milly@inspection.com", Description = "Demanding", HasAuth = true },
+                new Data {Id = 102, Email = "luis@inspection.com", Description = "Never arrives late", HasAuth = false }
+            }, "inspectors")
             .Build();
 
 

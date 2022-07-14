@@ -80,12 +80,14 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
             var parsedQuery = parseResult.Value;
 
-            var foundProvider = _dataProviders.TryGetValue(dataProvider ?? _defaultProvider, out var provider);
+            var targetProvider = parsedQuery.Provider ?? dataProvider ?? _defaultProvider;
+            
+            var foundProvider = _dataProviders.TryGetValue(targetProvider, out var provider);
             _logger.LogInformation("{Provider} [{Status}] -> {Query}",
-                dataProvider,
+                targetProvider,
                 foundProvider ? "Found" : "Unknown",
                 query);
-            if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{dataProvider}\" not registred");
+            if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{targetProvider}\" not registred");
 
             var queryLambda = FromQuery(parsedQuery);
             _logger.LogInformation("From query[{Query}] derived:\n{Expression}",

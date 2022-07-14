@@ -44,6 +44,9 @@
     | "\"" ([0-9] | [a-z] | " ")+ "\""
     | ([0-9] | [a-z] | " ")+
 
-<query> ::= <cmdExpr> <query>
+<prv> ::= "<" <id> ">"
+
+<query> ::= <prv> <query>
+    | <cmdExpr> <query>
     | <strexp>
     | <logicExpr>

@@ -127,6 +127,13 @@ public static class QueryParser {
             select new Command(id));
 
     #endregion
+    
+    #region Selector
+    public static Parser<string> ProviderSelector => from left in Parse.Char('<').Named("provider-selector-left")
+        from id in Identifier.Named("provider-selector-id")
+        from right in Parse.Char('>').Named("provider-selector-right")
+        select id;
+    #endregion
 
     #region Expressions
     public static Parser<LogicExpression> LogicExpression => (
@@ -167,7 +174,8 @@ public static class QueryParser {
             select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, commandExpr.Commands))
-        .Or(from expr in LogicExpression select new Query(expr))
-        .Or(from str in StringExpression select new Query(str));
+    public static Parser<Query> Query => (from provider in ProviderSelector.Token() from query in Query select new Query(query.Root, provider)) 
+        .Or(from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, query.Provider, commandExpr.Commands))
+        .Or(from expr in LogicExpression select new Query(expr, null))
+        .Or(from str in StringExpression select new Query(str, null));
 }
