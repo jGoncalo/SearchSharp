@@ -24,6 +24,12 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
             _rules[rule.Identifier] = rule;
             return this;
         }
+        public Builder WithRule(string identifier, Action<Rule<TQueryData>.Builder> config) {
+            var builder = Rule<TQueryData>.Builder.For(identifier);
+            config(builder);
+            _rules[identifier] = builder.Build();
+            return this;
+        }
         public Builder RemoveRule(string ruleIdentifier) {
             if(_rules.ContainsKey(ruleIdentifier)) _rules.Remove(ruleIdentifier);
             return this;
@@ -42,6 +48,12 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
         #region Commands
         public Builder AddCommand(ICommand<TQueryData> command) {
             _commands[command.Identifier] = command;
+            return this;
+        }
+        public Builder WithCommand(string identifier, Action<Command<TQueryData>.Builder> config){
+            var builder = Command<TQueryData>.Builder.For(identifier);
+            config(builder);
+            _commands[identifier] = builder.Build();
             return this;
         }
         public Builder RemoveCommand(string commandIdentifier) {

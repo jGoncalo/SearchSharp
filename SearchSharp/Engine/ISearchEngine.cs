@@ -6,7 +6,11 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine;
 
-public interface ISearchEngine<TQueryData> where TQueryData : class {
+public interface ISearchEngine {
+    public Type DataType { get; }
+}
+
+public interface ISearchEngine<TQueryData> : ISearchEngine where TQueryData : class {
     public interface IEvaluator {
         Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
@@ -28,4 +32,5 @@ public interface ISearchEngine<TQueryData> where TQueryData : class {
     }
 
     IQueryable<TQueryData> Query(string query, string? dataProvider = null);
+    IQueryable<TQueryData> Query(Query query, string? dataProvider = null);
 }

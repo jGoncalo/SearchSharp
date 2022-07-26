@@ -4,6 +4,7 @@ using SearchSharp.Engine.Parser.Components.Expressions;
 namespace SearchSharp.Engine;
 
 using SearchSharp.Exceptions;
+using SearchSharp.Engine.Config;
 using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Evaluators;
 using System.Collections.Generic;
@@ -18,13 +19,26 @@ using SearchExp = Expression;
 public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : class {
     public class Builder {
-        private readonly ISearchEngine<TQueryData>.IConfig _config;
+        private ISearchEngine<TQueryData>.IConfig _config;
         private Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
         private string _defaultProvider = string.Empty;
 
-        public Builder(ISearchEngine<TQueryData>.IConfig config){
-            _config = config;
+        public Builder(){
+            _config = new Config<TQueryData>.Builder().Build();
         }
+
+        #region Configuration
+        public Builder With(ISearchEngine<TQueryData>.IConfig config) {
+            _config = config;
+            return this;
+        }
+        public Builder With(Action<Config<TQueryData>.Builder> configuration){
+            var builder = new Config<TQueryData>.Builder();
+            configuration(builder);
+            _config = builder.Build();
+            return this;
+        }
+        #endregion
 
         #region Providers
         public Builder RegisterProvider(ISearchEngine<TQueryData>.IDataProvider provider, bool isDefault = false){
@@ -56,6 +70,8 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         }
     }
 
+    public Type DataType { get; }
+
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
     private readonly IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders;
@@ -65,6 +81,8 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     private SearchEngine(ISearchEngine<TQueryData>.IConfig config, 
         IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> providers,
         string defaultProvider){
+        DataType = typeof(TQueryData);
+        
         _config = config;
         _evaluator = new Evaluator<TQueryData>(_config);
         _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
@@ -73,14 +91,14 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     }
 
     public IQueryable<TQueryData> Query(string query, string? dataProvider = null){
-        if(string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Null or empty argument", nameof(query));
+        var parseResult = QueryParser.Query.TryParse(query);
+        if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
 
+        return Query(parseResult.Value, dataProvider);
+    }
+    public IQueryable<TQueryData> Query(Query query, string? dataProvider = null){
         try{
-            var parseResult = QueryParser.Query.TryParse(query);
-            if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
-            var parsedQuery = parseResult.Value;
-
-            var targetProvider = parsedQuery.Provider ?? dataProvider ?? _defaultProvider;
+            var targetProvider = query.Provider ?? dataProvider ?? _defaultProvider;
             
             var foundProvider = _dataProviders.TryGetValue(targetProvider, out var provider);
             _logger.LogInformation("{Provider} [{Status}] -> {Query}",
@@ -89,11 +107,11 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
                 query);
             if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{targetProvider}\" not registred");
 
-            var queryLambda = FromQuery(parsedQuery);
+            var queryLambda = FromQuery(query);
             _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
                 query, queryLambda.ToString());
-            var providerDataSource = ApplyRules(provider.DataSource(), EffectiveIn.Provider, parsedQuery.Commands);
-            return ApplyRules(providerDataSource.Where(queryLambda), EffectiveIn.Query, parsedQuery.Commands);
+            var providerDataSource = ApplyRules(provider.DataSource(), EffectiveIn.Provider, query.Commands);
+            return ApplyRules(providerDataSource.Where(queryLambda), EffectiveIn.Query, query.Commands);
         }
         catch(Exception exp){ 
             _logger.LogCritical(exp, "Unexpected error for query [{Query}]", query);

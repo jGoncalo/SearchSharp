@@ -1,6 +1,6 @@
 #https://bnfplayground.pauliankline.com/
 
-<bool> ::= "True"|"False"
+<bool> ::= "True" | "False"
 <bop> ::= "|" | "&" | "^"
 <id> ::= [a-z] ([a-z] | [0-9])*
 <float> ::= "-" [0-9]+ "." [0-9]+

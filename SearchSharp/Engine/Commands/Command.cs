@@ -12,9 +12,11 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : class
         private readonly List<Argument> _arguments = new();
         private Func<Parameters<TQueryData>, IQueryable<TQueryData>> _effect = arg => arg.SourceQuery;
 
-        public Builder(string identifier) {
+        private Builder(string identifier) {
             Identifier = identifier;
         }
+
+        public static Builder For(string identifier) => new Builder(identifier);
 
         public Builder SetRuntime(EffectiveIn effectiveIn) {
             _effectiveIn = effectiveIn;

@@ -14,9 +14,11 @@ public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
         private readonly Dictionary<DirectiveNumericOperator, Expression<Func<TQueryData, NumericLiteral, bool>>> _numericRules = new();
         private Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>>? _rangeRule;
 
-        public Builder(string identifier) {
+        private Builder(string identifier) {
             Identifier = identifier;
         }
+
+        public static Builder For(string identifier) => new Builder(identifier);
 
         public Builder AddDescription(string description) {
             _description = description;
