@@ -8,9 +8,13 @@ namespace SearchSharp.Engine;
 
 public interface ISearchEngine {
     public Type DataType { get; }
+    public string Alias { get; }
+
+    IQueryable<QueryData> Query(string query, string? dataProvider = null);
+    IQueryable<QueryData> Query(Query query, string? dataProvider = null);
 }
 
-public interface ISearchEngine<TQueryData> : ISearchEngine where TQueryData : class {
+public interface ISearchEngine<TQueryData> : ISearchEngine where TQueryData : QueryData {
     public interface IEvaluator {
         Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
@@ -31,6 +35,6 @@ public interface ISearchEngine<TQueryData> : ISearchEngine where TQueryData : cl
         ILoggerFactory LoggerFactory { get; }
     }
 
-    IQueryable<TQueryData> Query(string query, string? dataProvider = null);
-    IQueryable<TQueryData> Query(Query query, string? dataProvider = null);
+    new IQueryable<TQueryData> Query(string query, string? dataProvider = null);
+    new IQueryable<TQueryData> Query(Query query, string? dataProvider = null);
 }

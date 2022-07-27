@@ -4,7 +4,7 @@ using SearchSharp.Exceptions;
 
 namespace SearchSharp.Engine.Commands;
 
-public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : class {
+public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : QueryData {
     public class Builder
     {
         public readonly string Identifier;

@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class ReplaceStringVisitor<TQueryData> : ExpressionVisitor 
-    where TQueryData : class {
+    where TQueryData : QueryData {
 
     private readonly string _value;
     private ParameterExpression _target = Expression.Parameter(typeof(object));

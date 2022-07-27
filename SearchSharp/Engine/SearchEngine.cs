@@ -17,13 +17,15 @@ using LinqExp = System.Linq.Expressions.Expression;
 using SearchExp = Expression;
 
 public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
-    where TQueryData : class {
+    where TQueryData : QueryData {
     public class Builder {
+        private readonly string _alias;
         private ISearchEngine<TQueryData>.IConfig _config;
         private Dictionary<string, ISearchEngine<TQueryData>.IDataProvider> _dataProviders = new();
         private string _defaultProvider = string.Empty;
 
-        public Builder(){
+        public Builder(string alias){
+            _alias = alias;
             _config = new Config<TQueryData>.Builder().Build();
         }
 
@@ -66,11 +68,12 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
         public SearchEngine<TQueryData> Build() {
             if(_dataProviders.Values.Count() == 0) throw new BuildException("At least one data provider must be registered");
-            return new SearchEngine<TQueryData>(_config, _dataProviders, _defaultProvider);
+            return new SearchEngine<TQueryData>(_alias, _config, _dataProviders, _defaultProvider);
         }
     }
 
     public Type DataType { get; }
+    public String Alias { get; }
 
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
@@ -78,9 +81,10 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     private readonly string _defaultProvider;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
-    private SearchEngine(ISearchEngine<TQueryData>.IConfig config, 
+    private SearchEngine(string alias, ISearchEngine<TQueryData>.IConfig config, 
         IReadOnlyDictionary<string, ISearchEngine<TQueryData>.IDataProvider> providers,
         string defaultProvider){
+        Alias = alias;
         DataType = typeof(TQueryData);
         
         _config = config;
@@ -88,6 +92,15 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
         _dataProviders = providers;
         _defaultProvider = defaultProvider;
+    }
+
+    IQueryable<QueryData> ISearchEngine.Query(string query, string? dataProvider)
+    {
+        return Query(query, dataProvider).Cast<QueryData>();
+    }
+    IQueryable<QueryData> ISearchEngine.Query(Query query, string? dataProvider)
+    {
+        return Query(query, dataProvider).Cast<QueryData>();
     }
 
     public IQueryable<TQueryData> Query(string query, string? dataProvider = null){
@@ -98,7 +111,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     }
     public IQueryable<TQueryData> Query(Query query, string? dataProvider = null){
         try{
-            var targetProvider = query.Provider ?? dataProvider ?? _defaultProvider;
+            var targetProvider = query.Provider?.ProviderId ?? dataProvider ?? _defaultProvider;
             
             var foundProvider = _dataProviders.TryGetValue(targetProvider, out var provider);
             _logger.LogInformation("{Provider} [{Status}] -> {Query}",

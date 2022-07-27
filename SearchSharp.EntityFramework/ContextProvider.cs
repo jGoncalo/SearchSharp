@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SearchSharp.EntityFramework;
 
 public class ContextProvider<TContext, TQueryData> : ISearchEngine<TQueryData>.IDataProvider
-    where TQueryData : class
+    where TQueryData : QueryData
     where TContext : DbContext
 {
         public string Name { get; }

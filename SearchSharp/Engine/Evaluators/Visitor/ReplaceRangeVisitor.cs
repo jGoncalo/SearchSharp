@@ -4,7 +4,7 @@ using SearchSharp.Engine.Parser.Components;
 namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class ReplaceRangeVisitor<TQueryData> : ExpressionVisitor 
-    where TQueryData : class {
+    where TQueryData : QueryData {
 
     private readonly NumericLiteral _lowerLiteral;
     private readonly NumericLiteral _upperLiteral;

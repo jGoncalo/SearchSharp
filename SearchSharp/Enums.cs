@@ -7,7 +7,6 @@ public enum EffectiveIn {
     Query = 2
 }
 
-
 public enum LiteralType {
     Numeric = 0,
     String = 1,
@@ -28,19 +27,20 @@ public enum DirectiveType {
     Range = 2
 }
 public enum DirectiveComparisonOperator {
-    Rule = 0,           //:
-    Equal = 1,          //=
-    Similar = 2,        //~
+    Rule = 0,               //:
+    Equal = 1,              //=
+    Similar = 2,            //~
 }
+
 public enum DirectiveNumericOperator {
-    GreaterOrEqual = 0,    //>=
-    Greater = 1,        //>
-    Lesser = 2,         //<
-    LesserOrEqual = 3,     //<=
+    GreaterOrEqual = 0,     //>=
+    Greater = 1,            //>
+    Lesser = 2,             //<
+    LesserOrEqual = 3,      //<=
 }
 
 public enum LogicOperator {
-    Or = 0,
-    And = 1,
-    Xor = 2
+    Or = 0,                 //|
+    And = 1,                //&
+    Xor = 2                 //^
 }

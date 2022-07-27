@@ -4,7 +4,7 @@ using SearchSharp.Engine.Parser.Components;
 namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class ReplaceLiteralVisitor<TQueryData, TLiteral> : ExpressionVisitor 
-    where TQueryData : class 
+    where TQueryData : QueryData 
     where TLiteral : Literal {
 
     private readonly TLiteral _literal;

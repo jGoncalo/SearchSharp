@@ -1,3 +1,5 @@
+using SearchSharp.Engine;
+
 namespace SearchSharp.Domain;
 
 public interface ISearchInput {
@@ -7,11 +9,15 @@ public interface ISearchInput {
 }
 
 public interface ISearchResult<TQueryData> 
-    where TQueryData : class {
+    where TQueryData : QueryData {
     public ISearchInput Input { get; }
     public int Total { get; }
 
     public TQueryData[] Content { get; }
+}
+
+public interface ISearchResult : ISearchResult<QueryData> {
+
 }
 
 public class SearchInput : ISearchInput {
@@ -20,8 +26,12 @@ public class SearchInput : ISearchInput {
     public string[] Commands { get; init; } = Array.Empty<string>();
 }
 
+public class SearchResult : SearchResult<QueryData>, ISearchResult {
+    
+}
+
 public class SearchResult<TQueryData> : ISearchResult<TQueryData>
-    where TQueryData : class {
+    where TQueryData : QueryData {
     public ISearchInput Input { get; init; } = new SearchInput();
     public int Total { get; init; }
 

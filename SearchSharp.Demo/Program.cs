@@ -15,7 +15,7 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Demo;
 
-public class Data {
+public class Data : QueryData {
     public enum Provider {
         Internal = 0,
         External = 1
@@ -32,6 +32,23 @@ public class Data {
     {
         return $"[{Id}@{ProviderType}] -> {Email} [hasAuth:{HasAuth}]::= {Description}";
     }
+}
+
+public class Game : QueryData {
+    [Flags]
+    public enum Platform {
+        Pc = 0,
+        Xbox = 1,
+        Playstation = 2,
+        Nintendo = 4,
+        Apple = 8,
+        Android = 16
+    }
+    
+    public string Name { get; set; } = string.Empty;
+    public Platform AvailableOn { get; set; } = Platform.Pc;
+
+    public override string ToString() => $"{Name} [{AvailableOn.ToString()}]";
 }
 
 internal class Program
@@ -57,7 +74,7 @@ internal class Program
                 .CreateLogger());
 
         var searchDomain = new SearchDomain.Builder()
-            .With<Data>(engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
+            .With<Data>("user", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
                 .SetDefaultHandler(_ => false)
                 .SetStringRule((d, text) => d.Description.Contains(text))
                     
@@ -115,7 +132,35 @@ internal class Program
                     new Data {Id = 101, Email = "milly@inspection.com", Description = "Demanding", HasAuth = true },
                     new Data {Id = 102, Email = "luis@inspection.com", Description = "Never arrives late", HasAuth = false }
                 }, "inspectors"))
-            .Build();
+            .With<Game>("games", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
+                .SetDefaultHandler(_ => false)
+                .SetStringRule((data, str) => data.Name.Contains(str))
+                
+                //Rules
+                .WithRule("name", ruleSpec => ruleSpec.AddDescription("Match with stored description")
+                    .AddOperator<StringLiteral>(DirectiveComparisonOperator.Equal, (data, str) => data.Name == str.Value)
+                    .AddOperator<StringLiteral>(DirectiveComparisonOperator.Similar, (data, str) => data.Name.Contains(str.Value)))
+                .WithRule("platform", ruleSpec => ruleSpec.AddDescription("Match with game platforms")
+                    .AddOperator<StringLiteral>(DirectiveComparisonOperator.Equal, (data, str) => data.AvailableOn.HasFlag(str.AsEnum<Game.Platform>()))
+                    .AddOperator<NumericLiteral>(DirectiveComparisonOperator.Equal, (data, num) => data.AvailableOn.HasFlag(num.AsEnum<Game.Platform>()))
+                    .AddOperator((data, lower, upper) => lower.AsInt >= (int) data.AvailableOn || upper.AsInt <= (int) data.AvailableOn)))
+                .AddMemoryProvider(new [] {
+                    new Game { Name = "Zelda: Breath of the Wild", AvailableOn = Game.Platform.Nintendo },
+                    new Game { Name = "Fallout 4", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },
+                    new Game { Name = "Call of Duty - Black Ops 4", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },
+                    new Game { Name = "Halo 5", AvailableOn = Game.Platform.Xbox },
+                    new Game { Name = "God Of War", AvailableOn = Game.Platform.Playstation | Game.Platform.Pc },
+                    new Game { Name = "Bloodborn", AvailableOn = Game.Platform.Playstation }
+                }, "Gen8")
+                .AddMemoryProvider(new [] {
+                    new Game { Name = "Zelda: Breath of the Wild 2", AvailableOn = Game.Platform.Nintendo },
+                    new Game { Name = "Starfield", AvailableOn = Game.Platform.Xbox | Game.Platform.Pc },
+                    new Game { Name = "Assassins Creed - Valhalla", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },
+                    new Game { Name = "Halo Infinite", AvailableOn = Game.Platform.Xbox | Game.Platform.Pc },
+                    new Game { Name = "Destiny 3", AvailableOn = Game.Platform.Playstation | Game.Platform.Pc },
+                    new Game { Name = "God Of War Ragnarok", AvailableOn = Game.Platform.Playstation }
+                }, "Gen9"))
+                .Build();
 
 
         Console.WriteLine("---SearchEngine---");
@@ -131,7 +176,7 @@ internal class Program
             if(query == "quit") break;
 
             try{
-                var results = searchDomain.Search<Data>(query);
+                var results = searchDomain.Search(query);
 
                 Console.WriteLine($"\n\nFound: {results.Total} for query \"{results.Input.Query}\"\n\n");
                 foreach(var res in results.Content){

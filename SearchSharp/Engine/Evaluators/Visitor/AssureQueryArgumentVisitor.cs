@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 namespace SearchSharp.Engine.Evaluators.Visitor;
 
 internal class AssureQueryArgumentVisitor<TQueryData> : ExpressionVisitor 
-    where TQueryData : class {
+    where TQueryData : QueryData {
     private readonly ParameterExpression _dataParameter = Expression.Parameter(typeof(TQueryData), "v_data");
 
     public AssureQueryArgumentVisitor(){

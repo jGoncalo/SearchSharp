@@ -8,7 +8,7 @@ public static class Extensions {
         Func<TContext> contextFactory,
         Func<TContext, IQueryable<TQueryData>> selector,
         string? providerName = null) 
-        where TQueryData : class 
+        where TQueryData : QueryData 
         where TContext : DbContext {
             builder.RegisterProvider(new ContextProvider<TContext, TQueryData>(contextFactory, selector, providerName));
         return builder;
@@ -16,7 +16,7 @@ public static class Extensions {
     public static SearchEngine<TQueryData>.Builder AddEntityFrameworkProvider<TContext, TQueryData>(this SearchEngine<TQueryData>.Builder builder,
         Func<TContext> contextFactory,
         string? providerName = null) 
-        where TQueryData : class 
+        where TQueryData : QueryData 
         where TContext : DbContext {
             builder.RegisterProvider(new ContextProvider<TContext, TQueryData>(contextFactory, 
                 context => context.Set<TQueryData>().AsNoTracking(), providerName));

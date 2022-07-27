@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace SearchSharp.Engine.Config;
 
 public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig 
-    where TQueryData : class {
+    where TQueryData : QueryData {
     public class Builder {
         private readonly Dictionary<string, ICommand<TQueryData>> _commands = new();
         private readonly Dictionary<string, IRule<TQueryData>> _rules = new();

@@ -5,7 +5,7 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Evaluators;
 
-public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where TQueryData : class {
+public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where TQueryData : QueryData {
     private readonly ISearchEngine<TQueryData>.IConfig _config;
 
     private IReadOnlyDictionary<string, IRule<TQueryData>> Rules => _config.Rules;

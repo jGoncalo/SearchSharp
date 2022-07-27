@@ -3,7 +3,7 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Rules;
 
-public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : class {
+public class Rule<TQueryData> : IRule<TQueryData> where TQueryData : QueryData {
     public class Builder {
         public readonly string Identifier;
         private string _description = string.Empty;

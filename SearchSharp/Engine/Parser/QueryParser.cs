@@ -30,7 +30,7 @@ public static class QueryParser {
     #region String
     public static Parser<string> Identifier => 
         from leading in Parse.Letter.AtLeastOnce().Text()
-        from trailing in Parse.CharExcept("&|^><=. \t\n[](){}:~").Many().Text()
+        from trailing in Parse.CharExcept("&|^><=. \t\n[](){}:~@").Many().Text()
         select leading + trailing;
     public static Parser<StringLiteral> String => (from empty in Parse.String("\"\"").Text().Named("string-empty") select new StringLiteral(string.Empty))
         .Or(from leading in Parse.Char('"').Once().Named("string-start")
@@ -129,10 +129,18 @@ public static class QueryParser {
     #endregion
     
     #region Selector
-    public static Parser<string> ProviderSelector => from left in Parse.Char('<').Named("provider-selector-left")
-        from id in Identifier.Named("provider-selector-id")
+    public static Parser<Provider> ProviderInfo => from left in Parse.Char('<').Named("provider-selector-left")
+        from provider in (from engineAlias in Identifier 
+                            from at in Parse.Char('@') 
+                            from providerSource in Identifier 
+                            select Provider.With(providerSource, engineAlias))
+                        .Or(from at in Parse.Char('@') 
+                            from providerSource in Identifier 
+                            select Provider.WithProvider(providerSource))
+                        .Or(from engineAlias in Identifier 
+                            select Provider.WithEngine(engineAlias))
         from right in Parse.Char('>').Named("provider-selector-right")
-        select id;
+        select provider;
     #endregion
 
     #region Expressions
@@ -174,7 +182,7 @@ public static class QueryParser {
             select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from provider in ProviderSelector.Token() from query in Query select new Query(query.Root, provider)) 
+    public static Parser<Query> Query => (from provider in ProviderInfo.Token() from query in Query select new Query(query.Root, provider)) 
         .Or(from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, query.Provider, commandExpr.Commands))
         .Or(from expr in LogicExpression select new Query(expr, null))
         .Or(from str in StringExpression select new Query(str, null));

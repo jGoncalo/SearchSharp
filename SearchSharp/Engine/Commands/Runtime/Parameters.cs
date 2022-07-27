@@ -1,6 +1,6 @@
 namespace SearchSharp.Engine.Commands.Runtime;
 
-public readonly struct Parameters<TQueryData> where TQueryData : class {
+public readonly struct Parameters<TQueryData> where TQueryData : QueryData {
     public readonly IQueryable<TQueryData> SourceQuery;
     private readonly IReadOnlyDictionary<string, Argument> _arguments;
 
