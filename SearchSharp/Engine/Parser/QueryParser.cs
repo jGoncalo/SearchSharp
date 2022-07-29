@@ -110,21 +110,21 @@ public static class QueryParser {
             select args.Append(arg).ToArray())
         .Or(from arg in Argument select new [] { arg });
 
-    public static Parser<Command>  Command => (from prefix in Parse.Char('#').Once().Named("command-prefix")
+    public static Parser<Command>  CommandParser => (from prefix in Parse.Char('#').Once().Named("command-prefix")
             from id in Identifier.Named("command-identifier")
             from lP in Parse.Char('(').Once()
             from args in Arguments.Token().Named("command-arguments")
             from rP in Parse.Char(')').Once()
-            select new Command(id, args))
+            select Command.WithArguments(id, args))
         .Or(from prefix in Parse.Char('#').Once().Named("command-prefix")
             from id in Identifier.Named("command-identifier")
             from lP in Parse.Char('(').Once()
             from ws in Parse.WhiteSpace.Optional()
             from rP in Parse.Char(')').Once()
-            select new Command(id))
+            select Command.NoArgument(id))
         .Or(from prefix in Parse.Char('#').Once().Named("command-prefix")
             from id in Identifier.Named("command-identifier")
-            select new Command(id));
+            select Command.NoArgument(id));
 
     #endregion
     
@@ -133,7 +133,7 @@ public static class QueryParser {
         from provider in (from engineAlias in Identifier 
                             from at in Parse.Char('@') 
                             from providerSource in Identifier 
-                            select Provider.With(providerSource, engineAlias))
+                            select Provider.With(engineAlias, providerSource))
                         .Or(from at in Parse.Char('@') 
                             from providerSource in Identifier 
                             select Provider.WithProvider(providerSource))
@@ -175,10 +175,10 @@ public static class QueryParser {
             select new StringExpression(content))
         .Or(from content  in Parse.AnyChar.AtLeastOnce().Text().Token() select new StringExpression(content));
 
-    public static Parser<CommandExpression> CommandExpression => (from command in Command.Token()
+    public static Parser<CommandExpression> CommandExpression => (from command in CommandParser.Token()
         from commandExpr in CommandExpression
-        select new CommandExpression(commandExpr, command))
-        .Or(from command in Command.Token()
+        select commandExpr + command)
+        .Or(from command in CommandParser.Token()
             select new CommandExpression(command));
     #endregion
 

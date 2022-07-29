@@ -1,5 +1,6 @@
 using SearchSharp.Engine;
 using SearchSharp.Engine.Parser;
+using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
 using Sprache;
 
@@ -68,15 +69,18 @@ public class SearchDomain : ISearchDomain
         if(!parsed.WasSuccessful) throw new SearchExpception("");
         var parsedQuery = parsed.Value;
 
-        var targetAlias = engineAlias ?? parsedQuery.Provider?.EngineAlias ?? _defaultEngineAlias;
+        return Search(query, engineAlias, dataProvider);
+    }
+    public ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null) {
+        var targetAlias = engineAlias ?? query.Provider?.EngineAlias ?? _defaultEngineAlias;
         var hasEngine = TryGet(targetAlias, out var engine);
         
         if(!hasEngine) throw new SearchExpception("");
 
-        var queryable = engine!.Query(parseResult.Value, dataProvider);
+        var queryable = engine!.Query(query, dataProvider);
         return new SearchResult{
             Input = new SearchInput {
-                Query = query,
+                Query = query.ToString(),
                 EvaluatedExpression = "",
                 Commands = Array.Empty<string>()
             },
@@ -86,6 +90,9 @@ public class SearchDomain : ISearchDomain
         };
     }
     public Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null) {
+        return Task.FromResult(Search(query, engineAlias, dataProvider));
+    }
+    public Task<ISearchResult> SearchAsync(Query query, string? engineAlias = null, string? dataProvider = null) {
         return Task.FromResult(Search(query, engineAlias, dataProvider));
     }
 
@@ -115,7 +122,30 @@ public class SearchDomain : ISearchDomain
             Content = queryable.ToArray()
         };
     }
+    public ISearchResult<TQueryData> Search<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
+    {
+        var targetAlias = engineAlias ?? query.Provider?.EngineAlias ?? _defaultEngineAlias;
+        var hasEngine = TryGet<TQueryData>(targetAlias, out var engine);
+        
+        if(!hasEngine) throw new SearchExpception("");
+
+        var queryable = engine!.Query(query, dataProvider);
+        return new SearchResult<TQueryData>{
+            Input = new SearchInput {
+                Query = query.ToString(),
+                EvaluatedExpression = "",
+                Commands = Array.Empty<string>()
+            },
+
+            Total = queryable.Count(),
+            Content = queryable.ToArray()
+        };
+    }
     public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
+    {
+        return Task.FromResult(Search<TQueryData>(query, engineAlias, dataProvider));
+    }
+    public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
         return Task.FromResult(Search<TQueryData>(query, engineAlias, dataProvider));
     }

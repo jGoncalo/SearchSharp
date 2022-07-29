@@ -14,7 +14,7 @@ public class CommandParser {
     [InlineData("", false)]
     [InlineData(" ", false)]
     public void CanHandle_NoArgs(string value, bool success){
-        var result = QueryParser.Command.TryParse(value);
+        var result = QueryParser.CommandParser.TryParse(value);
 
         Assert.Equal(success, result.WasSuccessful);
         if(success){
@@ -32,7 +32,7 @@ public class CommandParser {
     [InlineData("#cmd(\"some\", 33)", 2)]
     [InlineData("#cmd(\"some\", \"some\")", 2)]
     public void CanHandle_Args(string value, int argCount){
-        var result = QueryParser.Command.TryParse(value);
+        var result = QueryParser.CommandParser.TryParse(value);
 
         Assert.True(result.WasSuccessful);
         Assert.NotNull(result.Value.Arguments);

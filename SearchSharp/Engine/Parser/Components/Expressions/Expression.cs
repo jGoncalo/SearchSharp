@@ -6,4 +6,7 @@ public abstract class Expression : QueryItem {
     public Expression(ExpType type) {
         Type = type;
     }
+
+    public static Query operator +(Provider provider, Expression expression) => new Query(expression, provider);
+    public static Query operator +(CommandExpression commands, Expression expression) => new Query(expression, null, commands.Commands);
 }

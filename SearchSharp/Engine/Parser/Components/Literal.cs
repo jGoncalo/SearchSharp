@@ -16,6 +16,8 @@ public class BooleanLiteral : Literal {
     public BooleanLiteral(bool value) : base(LiteralType.Boolean, value.ToString()) {
         Value = value;
     }
+
+    public override string ToString() => RawValue;
 }
 
 public class StringLiteral : Literal {
@@ -32,6 +34,8 @@ public class StringLiteral : Literal {
     public StringLiteral(string value) : base(LiteralType.String, value) {
         Value = value;
     }
+
+    public override string ToString() => $"\"{RawValue.ToString()}\"";
 }
 
 public class NumericLiteral : Literal {
@@ -52,7 +56,14 @@ public class NumericLiteral : Literal {
             AsInt = int.TryParse(RawValue, out var intValue) ? intValue : 0;
             AsFloat = (float) AsInt;
         }
-        
+    }
+    private NumericLiteral(int value) : base(LiteralType.Numeric, value.ToString()) {
+        AsInt = value;
+        AsFloat = value;
+    }
+    private NumericLiteral(float value) : base(LiteralType.Numeric, value.ToString()) {
+        AsInt = (int) value;
+        AsFloat = value;
     }
     private NumericLiteral(bool isMin) : base(LiteralType.Numeric, string.Empty) {
         AsInt = isMin ? int.MinValue : int.MaxValue;
@@ -60,8 +71,13 @@ public class NumericLiteral : Literal {
     }
 
     public static NumericLiteral Float(string rawValue) => new NumericLiteral(rawValue, true);
+    public static NumericLiteral Float(float value) => new NumericLiteral(value);
+    
     public static NumericLiteral Int(string rawValue) => new NumericLiteral(rawValue, false);
+    public static NumericLiteral Int(int value) => new NumericLiteral(value);
 
     public static NumericLiteral Min => new NumericLiteral(true);
     public static NumericLiteral Max => new NumericLiteral(false);
+
+    public override string ToString() => RawValue;
 }

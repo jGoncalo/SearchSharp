@@ -1,3 +1,5 @@
+using SearchSharp.Engine.Parser.Components.Expressions;
+
 namespace SearchSharp.Engine.Parser.Components;
 
 public abstract class Directive : QueryItem {
@@ -8,6 +10,8 @@ public abstract class Directive : QueryItem {
         Type = type;
         Identifier = identifer;
     }
+
+    public DirectiveExpression AsExpression() => new DirectiveExpression(this);
 }
 
 public class ComparisonDirective : Directive {
@@ -18,6 +22,18 @@ public class ComparisonDirective : Directive {
     public ComparisonDirective(DirectiveComparisonOperator op, string identifer, Literal value) : base(DirectiveType.Comparison, identifer) {
         OperatorType = op;
         Value = value;
+    }
+
+    public override string ToString() {
+        var opStr = OperatorType switch {
+            DirectiveComparisonOperator.Rule => ":",
+            DirectiveComparisonOperator.Equal => "=",
+            DirectiveComparisonOperator.Similar => "~",
+
+            _ => OperatorType.ToString()
+        };
+
+        return Identifier + opStr + Value.ToString();
     }
 }
 
@@ -37,6 +53,19 @@ public class NumericDirective : Directive {
     public NumericDirective(Operator operatorSpec, string identifer) : base(DirectiveType.Numeric, identifer) {
         OperatorSpec = operatorSpec;
     }
+
+    public override string ToString() {
+        var opStr = OperatorSpec.OperatorType switch {
+            DirectiveNumericOperator.Greater => ">",
+            DirectiveNumericOperator.GreaterOrEqual => ">=",
+            DirectiveNumericOperator.LesserOrEqual => "<=",
+            DirectiveNumericOperator.Lesser => "<",
+
+            _ => OperatorSpec.OperatorType.ToString()
+        };
+
+        return Identifier + opStr + OperatorSpec.ToString();
+    }
 }
 
 public class RangeDirective : Directive {
@@ -52,5 +81,9 @@ public class RangeDirective : Directive {
     public readonly Operator OperatorSpec;
     public RangeDirective(Operator operatorSpec, string identifer) : base(DirectiveType.Range, identifer) {
         OperatorSpec = operatorSpec;
+    }
+
+    public override string ToString() {
+        return Identifier + $"[{OperatorSpec.LowerBound}..{OperatorSpec.UpperBound}]";
     }
 }

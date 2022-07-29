@@ -10,4 +10,16 @@ public class BinaryExpression : LogicExpression {
         Left = left;
         Right = right;
     }
+
+    public override string ToString(){
+        var opStr = Operator switch {
+            LogicOperator.And => "&",
+            LogicOperator.Or => "|",
+            LogicOperator.Xor => "^",
+
+            _ => Operator.ToString()
+        };
+
+        return $"({Left.ToString()} {opStr} {Right.ToString()})";
+    }
 }

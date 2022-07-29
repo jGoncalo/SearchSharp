@@ -12,4 +12,10 @@ public class Query : QueryItem {
         Provider = provider;
         Commands = commands ?? Array.Empty<Command>();
     }
+
+    public override string ToString() => string.Join(' ', new [] { 
+            Provider?.ToString(),
+            string.Join(' ', Commands.Select(cmd => cmd.ToString())),
+            Root.ToString()
+        }.Where(str => !string.IsNullOrWhiteSpace(str)));
 }

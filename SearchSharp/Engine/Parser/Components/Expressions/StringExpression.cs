@@ -6,4 +6,6 @@ public class StringExpression : LogicExpression {
     public StringExpression(string value) : base(ExpType.String) {
         Value = value;
     }
+
+    public override string ToString() => $"\"{Value.ToString()}\"";
 }

@@ -37,12 +37,13 @@ public class Data : QueryData {
 public class Game : QueryData {
     [Flags]
     public enum Platform {
-        Pc = 0,
-        Xbox = 1,
-        Playstation = 2,
-        Nintendo = 4,
-        Apple = 8,
-        Android = 16
+        None = 0,
+        Pc = 1,
+        Xbox = 2,
+        Playstation = 4,
+        Nintendo = 8,
+        Apple = 16,
+        Android = 32
     }
     
     public string Name { get; set; } = string.Empty;
@@ -72,7 +73,8 @@ internal class Program
             .AddSerilog(new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateLogger());
-
+        
+        #region Domain Setup
         var searchDomain = new SearchDomain.Builder()
             .With<Data>("user", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
                 .SetDefaultHandler(_ => false)
@@ -143,7 +145,15 @@ internal class Program
                 .WithRule("platform", ruleSpec => ruleSpec.AddDescription("Match with game platforms")
                     .AddOperator<StringLiteral>(DirectiveComparisonOperator.Equal, (data, str) => data.AvailableOn.HasFlag(str.AsEnum<Game.Platform>()))
                     .AddOperator<NumericLiteral>(DirectiveComparisonOperator.Equal, (data, num) => data.AvailableOn.HasFlag(num.AsEnum<Game.Platform>()))
-                    .AddOperator((data, lower, upper) => lower.AsInt >= (int) data.AvailableOn || upper.AsInt <= (int) data.AvailableOn)))
+                    .AddOperator((data, lower, upper) => lower.AsInt >= (int) data.AvailableOn || upper.AsInt <= (int) data.AvailableOn))
+                .WithCommand("take", commandSpec => commandSpec
+                    .SetRuntime(EffectiveIn.Query)
+                    .AddArgument<NumericLiteral>("count")
+                    .SetEffect(arg => {
+                        var takeCount = (arg["count"].Literal as NumericLiteral)!.AsInt;
+                        return arg.SourceQuery.Take(takeCount);
+                    })
+                ))
                 .AddMemoryProvider(new [] {
                     new Game { Name = "Zelda: Breath of the Wild", AvailableOn = Game.Platform.Nintendo },
                     new Game { Name = "Fallout 4", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },
@@ -161,7 +171,7 @@ internal class Program
                     new Game { Name = "God Of War Ragnarok", AvailableOn = Game.Platform.Playstation }
                 }, "Gen9"))
                 .Build();
-
+        #endregion
 
         Console.WriteLine("---SearchEngine---");
 
@@ -176,7 +186,22 @@ internal class Program
             if(query == "quit") break;
 
             try{
-                var results = searchDomain.Search(query);
+                ISearchResult results;
+                if(query == "macro") {
+                    var provider = Provider.With("games", "Gen9");
+                    var commands = Command.WithArguments("take", 5.AsLiteral()) + Command.NoArgument("unknown");
+
+                    var platformDir = new ComparisonDirective(DirectiveComparisonOperator.Equal, "platform", Game.Platform.Pc.AsLiteral()).AsExpression();
+                    var nameDir = new ComparisonDirective(DirectiveComparisonOperator.Similar, "name", "Zelda".AsLiteral()).AsExpression();
+
+                    var expression = platformDir | nameDir;
+
+                    var macroQuery = provider + (commands + expression);
+
+                    Console.WriteLine($"\n\nExecuting macro search:\n{macroQuery}");
+                    results = searchDomain.Search(macroQuery);
+                }
+                else results = searchDomain.Search(query);
 
                 Console.WriteLine($"\n\nFound: {results.Total} for query \"{results.Input.Query}\"\n\n");
                 foreach(var res in results.Content){

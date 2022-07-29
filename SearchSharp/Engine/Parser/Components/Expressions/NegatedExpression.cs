@@ -6,4 +6,6 @@ public class NegatedExpression : LogicExpression {
     public NegatedExpression(LogicExpression negated) : base(ExpType.Negated) {
         Negated = negated;
     }
+
+    public override string ToString() => $"!({Negated.ToString()})";
 }
