@@ -64,10 +64,7 @@ public class SearchDomain : ISearchDomain
     public ISearchResult Search(string query, string? engineAlias = null, string? dataProvider = null) {
         var parseResult = QueryParser.Query.TryParse(query);
         if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
-
-        var parsed = QueryParser.Query.TryParse(query);
-        if(!parsed.WasSuccessful) throw new SearchExpception("");
-        var parsedQuery = parsed.Value;
+        var parsedQuery = parseResult.Value;
 
         return Search(parsedQuery, engineAlias, dataProvider);
     }

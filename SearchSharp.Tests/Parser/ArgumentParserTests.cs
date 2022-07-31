@@ -4,7 +4,7 @@ using Sprache;
 
 namespace SearchSharp.Tests.Parser;
 
-public class ArgumentParserTests {
+public class ArgumentsParserTests {
     [Theory]
     [InlineData("12", typeof(NumericLiteral))]
     [InlineData("-12", typeof(NumericLiteral))]
@@ -12,17 +12,17 @@ public class ArgumentParserTests {
     [InlineData("-12.5", typeof(NumericLiteral))]
     [InlineData("\"someValue\"", typeof(StringLiteral))]
     public void SingleArgument(string text, Type litType){
-        var argResult = QueryParser.Argument.TryParse(text);
+        var argResult = QueryParser.Literal.TryParse(text);
 
         Assert.True(argResult.WasSuccessful);
-        Assert.IsType(litType, argResult.Value.Literal);
+        Assert.IsType(litType, argResult.Value);
 
         var argsResult = QueryParser.Arguments.TryParse(text);
 
         Assert.True(argsResult.WasSuccessful);
         Assert.NotNull(argsResult.Value);
-        var singleArg = Assert.Single(argsResult.Value);
-        Assert.IsType(litType, singleArg.Literal);
+        var singleArg = Assert.Single(argsResult.Value.Literals);
+        Assert.IsType(litType, singleArg);
     }
 
     [Theory]
@@ -46,7 +46,7 @@ public class ArgumentParserTests {
         var result = QueryParser.Arguments.TryParse(text);
 
         Assert.True(result.WasSuccessful);
-        Assert.NotEmpty(result.Value);
-        Assert.Equal(2, result.Value.Length);
+        Assert.NotEmpty(result.Value.Literals);
+        Assert.Equal(2, result.Value.Literals.Length);
     }
 }

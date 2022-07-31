@@ -100,15 +100,15 @@ public static class QueryParser {
     #endregion
     
     #region Commands
-    public static Parser<Command.Argument> Argument => from lit in (from num in Numeric select num as Literal)
-                                                                        .Or(from str in String select str as Literal)
-                                                                        .Or(from @bool in Bool select @bool as Literal)
-        select new Command.Argument(lit);
-    public static Parser<Command.Argument[]> Arguments => (from arg in Argument
+    public static Parser<Literal> Literal => from lit in (from num in Numeric select num as Literal)
+                                                        .Or(from str in String select str as Literal)
+                                                        .Or(from @bool in Bool select @bool as Literal)
+        select lit;
+    public static Parser<Arguments> Arguments => (from lit in Literal
             from comma in Parse.Char(',').Once().Text().Token()
             from args in Arguments
-            select args.Append(arg).ToArray())
-        .Or(from arg in Argument select new [] { arg });
+            select args + lit)
+        .Or(from lit in Literal select new Arguments(lit));
 
     public static Parser<Command>  CommandParser => (from prefix in Parse.Char('#').Once().Named("command-prefix")
             from id in Identifier.Named("command-identifier")
@@ -182,7 +182,7 @@ public static class QueryParser {
             select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from provider in ProviderInfo.Token() from query in Query select new Query(query.Root, provider)) 
+    public static Parser<Query> Query => (from provider in ProviderInfo.Token() from query in Query select new Query(query.Root, provider, query.Commands)) 
         .Or(from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, query.Provider, commandExpr.Commands))
         .Or(from expr in LogicExpression select new Query(expr, null))
         .Or(from str in StringExpression select new Query(str, null));

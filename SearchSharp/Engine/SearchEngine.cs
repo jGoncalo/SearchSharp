@@ -136,9 +136,9 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         var afterQ = query;
         foreach(var command in commands) {
             if(_config.Commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
-                var arguments = cmd.With(command.Arguments.Select(arg => arg.Literal).ToArray());
+                var arguments = cmd.With(command.Arguments.Literals);
                 try{
-                    afterQ = cmd.Effect(new Parameters<TQueryData>(query, arguments));
+                    afterQ = cmd.Effect(new Parameters<TQueryData>(query, effectIn, arguments));
                 }
                 catch(Exception exp){
                     var argumentStr = arguments.Count() == 0 ? string.Empty : arguments

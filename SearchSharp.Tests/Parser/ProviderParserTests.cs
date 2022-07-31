@@ -7,7 +7,7 @@ namespace SearchSharp.Tests.Parser;
 public class ProviderParserTests {
     [Fact]
     public void CanHandle_ProviderAndAlias(){
-        var result = QueryParser.ProviderInfo.TryParse("<memory@user>");
+        var result = QueryParser.ProviderInfo.TryParse("<user@memory>");
 
         Assert.True(result.WasSuccessful);
         Assert.Equal("memory", result.Value.ProviderId);
@@ -15,7 +15,7 @@ public class ProviderParserTests {
     }
     [Fact]
     public void CanHandle_Provider(){
-        var result = QueryParser.ProviderInfo.TryParse("<memory>");
+        var result = QueryParser.ProviderInfo.TryParse("<@memory>");
 
         Assert.True(result.WasSuccessful);
         Assert.Equal("memory", result.Value.ProviderId);
@@ -23,7 +23,7 @@ public class ProviderParserTests {
     }
     [Fact]
     public void CanHandle_Alias(){
-        var result = QueryParser.ProviderInfo.TryParse("<@user>");
+        var result = QueryParser.ProviderInfo.TryParse("<user>");
 
         Assert.True(result.WasSuccessful);
         Assert.Null(result.Value.ProviderId);

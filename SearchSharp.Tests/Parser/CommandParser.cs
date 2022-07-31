@@ -19,7 +19,7 @@ public class CommandParser {
         Assert.Equal(success, result.WasSuccessful);
         if(success){
             Assert.NotNull(result.Value.Arguments);
-            Assert.Empty(result.Value.Arguments);
+            Assert.Empty(result.Value.Arguments.Literals);
             Assert.Equal(value.Remove(0, 1), result.Value.Identifier);
         }
     }
@@ -36,6 +36,6 @@ public class CommandParser {
 
         Assert.True(result.WasSuccessful);
         Assert.NotNull(result.Value.Arguments);
-        Assert.Equal(argCount, result.Value.Arguments.Length);
+        Assert.Equal(argCount, result.Value.Arguments.Literals.Length);
     }
 }

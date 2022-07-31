@@ -56,6 +56,11 @@ public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig
             _commands[identifier] = builder.Build();
             return this;
         }
+        public Builder WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData>, new() {
+            var templatedCommand = new Command<TQueryData, TCommandSpec>();
+            _commands[templatedCommand.Identifier] = templatedCommand;
+            return this;
+        }
         public Builder RemoveCommand(string commandIdentifier) {
             if(_commands.ContainsKey(commandIdentifier)) _commands.Remove(commandIdentifier);
             return this;

@@ -1,6 +1,6 @@
 namespace SearchSharp.Attributes;
 
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public class CommandArgumentAttribute : Attribute {
     public readonly string Name;
 

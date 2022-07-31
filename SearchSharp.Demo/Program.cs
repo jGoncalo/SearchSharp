@@ -153,7 +153,8 @@ internal class Program
                         var takeCount = (arg["count"].Literal as NumericLiteral)!.AsInt;
                         return arg.SourceQuery.Take(takeCount);
                     })
-                ))
+                )
+                .WithCommand<SkipCommand>())
                 .AddMemoryProvider(new [] {
                     new Game { Name = "Zelda: Breath of the Wild", AvailableOn = Game.Platform.Nintendo },
                     new Game { Name = "Fallout 4", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },

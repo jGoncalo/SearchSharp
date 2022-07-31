@@ -1,8 +1,88 @@
+using SearchSharp.Attributes;
 using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
 
 namespace SearchSharp.Engine.Commands;
+
+public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
+    where TQueryData : QueryData
+    where TCommandSpec : CommandTemplate<TQueryData>, new() {
+    
+    private static LiteralType ToLiteralType(Type type){
+        if(type == typeof(int) || type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return LiteralType.Numeric;
+        if(type == typeof(string)) return LiteralType.String;
+        if(type == typeof(bool)) return LiteralType.Boolean;
+
+        //TODO: add good exception
+        throw new Exception("TODO");
+    }
+
+    private static string GetIdentifier() {
+        var attribute = typeof(TCommandSpec)
+            .GetCustomAttributes(false)
+            .Where(attr => attr is CommandAttribute)
+            .Cast<CommandAttribute>()
+            .FirstOrDefault();
+        return attribute?.Name ?? typeof(TCommandSpec).Name;
+    }
+    private static EffectiveIn GetEffectiveIn() {
+        var attribute = typeof(TCommandSpec)
+            .GetCustomAttributes(false)
+            .Where(attr => attr is CommandAttribute)
+            .Cast<CommandAttribute>()
+            .FirstOrDefault();
+
+        return attribute?.ExecuteAt ?? EffectiveIn.Query;
+    }
+    private static Argument[] GetArguments() {
+        var argList = new List<Argument>();
+
+        #region Properties
+        foreach(var prop in typeof(TCommandSpec).GetProperties()){
+            if(prop.GetSetMethod()?.IsPrivate ?? true) continue;
+
+            var attribute = prop.GetCustomAttributes(false)
+                .Where(attr => attr is CommandArgumentAttribute)
+                .Cast<CommandArgumentAttribute>().FirstOrDefault();
+            
+            argList.Add(new Argument(
+                attribute?.Name ?? prop.Name,
+                ToLiteralType(prop.PropertyType)
+            ));
+        }
+        #endregion
+
+        return argList.ToArray();
+    }
+    
+    private static bool SetProperty(TCommandSpec instance, Runtime.Argument argument){
+        return false;
+    }
+    private static bool SetField(TCommandSpec instance, Runtime.Argument argument){
+        return false;
+    }
+    private static bool SetParameter(TCommandSpec instance, Runtime.Argument argument){
+        return false;
+    }
+
+    private static IQueryable<TQueryData> Affect(Parameters<TQueryData> args) {
+        var spec = new TCommandSpec();
+
+        foreach(var arg in args){
+            if(SetProperty(spec, arg)) continue;
+            if(SetField(spec, arg)) continue;
+            if(SetParameter(spec, arg)) continue;
+        }
+
+        return spec.Affect(args.SourceQuery, args.AffectAt);
+    }
+
+    public Command() : base(GetIdentifier(), GetEffectiveIn(), Affect, GetArguments()) {
+
+    }
+
+}
 
 public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : QueryData {
     public class Builder
@@ -65,7 +145,7 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
     public Argument[] Arguments { get; }
     public Func<Parameters<TQueryData>, IQueryable<TQueryData>> Effect { get; }
 
-    private Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, params Argument[] arguments) {
+    protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, params Argument[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
         Effect = effect;

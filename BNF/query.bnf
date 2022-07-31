@@ -12,11 +12,12 @@
 <str> ::= "\"\""
     | "\"" ([0-9] | [a-z] | " ")+ "\""
 
-<arg> ::= <num> | <str> | <bool>
-<args> ::= <args> "," <arg>
-	| <arg>
+<lit> ::= <num> | <str> | <bool>
+<args> ::= <args> "," <lit>
+	| <lit>
 
 <cmd> ::= "#" <id> "(" <args> ")"
+    | "#" <id> "()"
 	| "#" <id>
 <cmdExpr> ::= <cmdExpr> <cmd>
     | <cmd>

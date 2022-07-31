@@ -3,31 +3,21 @@ using SearchSharp.Engine.Parser.Components.Expressions;
 namespace SearchSharp.Engine.Parser.Components;
 
 public class Command : QueryItem {
-    public class Argument : QueryItem {
-        public readonly Literal Literal;
-
-        public Argument(Literal literal){
-            Literal = literal;
-        }
-
-        public override string ToString() => Literal.RawValue;
-    }
-
     public readonly string Identifier;
-    public Argument[] Arguments;
+    public Arguments Arguments;
 
-    private Command(string identifer, params Argument[] arguments) {
+    private Command(string identifer, Arguments arguments) {
         Identifier = identifer;
-        Arguments = arguments ?? Array.Empty<Argument>();
+        Arguments = arguments;
     }
     
-    public static Command NoArgument(string identifier) => new Command(identifier);
-    public static Command WithArguments(string identifer, params Argument[] arguments) => new Command(identifer, arguments);
-    public static Command WithArguments(string identifer, params Literal[] arguments) => new Command(identifer, arguments.Select(lit => new Argument(lit)).ToArray());
+    public static Command NoArgument(string identifier) => new Command(identifier, new Arguments());
+    public static Command WithArguments(string identifer, params Literal[] literals) => new Command(identifer, new Arguments(literals));
+    public static Command WithArguments(string identifier, Arguments arguments) => new Command(identifier, arguments);
 
     public override string ToString()
     {
-        var argStr = string.Join(' ', Arguments.Select(arg => arg.ToString()));
+        var argStr = Arguments.ToString();
         argStr = string.IsNullOrWhiteSpace(argStr) ? string.Empty : $"({argStr})";
         return '#' + Identifier + argStr;
     }
