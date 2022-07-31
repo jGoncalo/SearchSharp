@@ -69,7 +69,7 @@ public class SearchDomain : ISearchDomain
         if(!parsed.WasSuccessful) throw new SearchExpception("");
         var parsedQuery = parsed.Value;
 
-        return Search(query, engineAlias, dataProvider);
+        return Search(parsedQuery, engineAlias, dataProvider);
     }
     public ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null) {
         var targetAlias = engineAlias ?? query.Provider?.EngineAlias ?? _defaultEngineAlias;
@@ -105,22 +105,7 @@ public class SearchDomain : ISearchDomain
         if(!parsed.WasSuccessful) throw new SearchExpception("");
         var parsedQuery = parsed.Value;
 
-        var targetAlias = engineAlias ?? parsedQuery.Provider?.EngineAlias ?? _defaultEngineAlias;
-        var hasEngine = TryGet<TQueryData>(targetAlias, out var engine);
-        
-        if(!hasEngine) throw new SearchExpception("");
-
-        var queryable = engine!.Query(parseResult.Value, dataProvider);
-        return new SearchResult<TQueryData>{
-            Input = new SearchInput {
-                Query = query,
-                EvaluatedExpression = "",
-                Commands = Array.Empty<string>()
-            },
-
-            Total = queryable.Count(),
-            Content = queryable.ToArray()
-        };
+        return Search<TQueryData>(parsedQuery, engineAlias, dataProvider);
     }
     public ISearchResult<TQueryData> Search<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
