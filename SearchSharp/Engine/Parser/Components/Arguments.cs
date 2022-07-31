@@ -15,7 +15,9 @@ public class Arguments : QueryItem {
         return new Arguments(argList.ToArray());
     }
     public static Arguments operator +(Literal lit, Arguments args) {
-        return args + lit;
+        var argList = args.Literals.ToList();
+        argList.Insert(0, lit);
+        return new Arguments(argList.ToArray());
     }
     public static Arguments operator +(Arguments left, Arguments right) {
         var argList = left.Literals.ToList();

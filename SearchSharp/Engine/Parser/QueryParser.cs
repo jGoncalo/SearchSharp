@@ -107,7 +107,7 @@ public static class QueryParser {
     public static Parser<Arguments> Arguments => (from lit in Literal
             from comma in Parse.Char(',').Once().Text().Token()
             from args in Arguments
-            select args + lit)
+            select lit + args)
         .Or(from lit in Literal select new Arguments(lit));
 
     public static Parser<Command>  CommandParser => (from prefix in Parse.Char('#').Once().Named("command-prefix")

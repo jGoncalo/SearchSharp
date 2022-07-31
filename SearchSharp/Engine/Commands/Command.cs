@@ -13,6 +13,7 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
         if(type == typeof(int) || type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return LiteralType.Numeric;
         if(type == typeof(string)) return LiteralType.String;
         if(type == typeof(bool)) return LiteralType.Boolean;
+        if(type.IsEnum) return LiteralType.String;
 
         //TODO: add good exception
         throw new Exception("TODO");
@@ -20,16 +21,14 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
 
     private static string GetIdentifier() {
         var attribute = typeof(TCommandSpec)
-            .GetCustomAttributes(false)
-            .Where(attr => attr is CommandAttribute)
+            .GetCustomAttributes(typeof(CommandAttribute), false)
             .Cast<CommandAttribute>()
             .FirstOrDefault();
         return attribute?.Name ?? typeof(TCommandSpec).Name;
     }
     private static EffectiveIn GetEffectiveIn() {
         var attribute = typeof(TCommandSpec)
-            .GetCustomAttributes(false)
-            .Where(attr => attr is CommandAttribute)
+            .GetCustomAttributes(typeof(ArgumentAttribute), false)
             .Cast<CommandAttribute>()
             .FirstOrDefault();
 
@@ -38,41 +37,90 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
     private static Argument[] GetArguments() {
         var argList = new List<Argument>();
 
-        #region Properties
-        foreach(var prop in typeof(TCommandSpec).GetProperties()){
-            if(prop.GetSetMethod()?.IsPrivate ?? true) continue;
+        var propInfos = typeof(TCommandSpec).GetProperties()
+            .Select(prop => {
+                var attribute = prop.GetCustomAttributes(typeof(ArgumentAttribute), false)
+                    .Cast<ArgumentAttribute>().FirstOrDefault();
+                return new {
+                    Property = prop,
+                    Attribute = attribute
+                };
+            })
+            .OrderBy(info => info.Attribute?.Position ?? Int16.MaxValue)
+            .ThenBy(info => info.Attribute?.Name ?? info.Property.Name)
+            .ToArray();
 
-            var attribute = prop.GetCustomAttributes(false)
-                .Where(attr => attr is CommandArgumentAttribute)
-                .Cast<CommandArgumentAttribute>().FirstOrDefault();
-            
+        foreach(var info in propInfos){
+            if(!(info.Property.GetSetMethod()?.IsPublic ?? false)) throw new SearchExpception("TODO");
+
             argList.Add(new Argument(
-                attribute?.Name ?? prop.Name,
-                ToLiteralType(prop.PropertyType)
+                info.Attribute?.Name ?? info.Property.Name,
+                ToLiteralType(info.Property.PropertyType)
             ));
         }
-        #endregion
 
         return argList.ToArray();
     }
     
-    private static bool SetProperty(TCommandSpec instance, Runtime.Argument argument){
-        return false;
-    }
-    private static bool SetField(TCommandSpec instance, Runtime.Argument argument){
-        return false;
-    }
-    private static bool SetParameter(TCommandSpec instance, Runtime.Argument argument){
-        return false;
+    private static void SetProperty(TCommandSpec instance, int argIndex, Runtime.Argument argument){
+        var targetProp = typeof(TCommandSpec).GetProperties()
+            .FirstOrDefault(prop => prop.GetCustomAttributes(typeof(ArgumentAttribute), false)
+                                        .Cast<ArgumentAttribute>()
+                                        .Any(attr => attr.Name == argument.Identifier)
+                                    || prop.Name == argument.Identifier);
+
+        if(targetProp == null) return;
+
+        var propType = targetProp.PropertyType;
+        object propValue;
+        
+        if(propType == typeof(string)) {
+            if(argument.Literal is not StringLiteral strLit) 
+                throw new ArgumentResolutionException($"expected argument[{argIndex}] to be of type: {LiteralType.String} but found uncastable[{targetProp.Name}]: {propType}");
+            propValue = strLit.Value;
+        }
+        else if (propType.IsEnum) {
+            switch (argument.Literal) {
+                case StringLiteral strLit:
+                    Enum.TryParse(propType, strLit.Value, true, out var enumVal);
+                    propValue = enumVal!;
+                    break;
+                case NumericLiteral numLit: {
+                    var isDefined = Enum.IsDefined(propType, numLit.AsInt);
+                    propValue = Enum.ToObject(propType, isDefined ? numLit.AsInt : 0);
+                    break;
+                }
+                default:
+                    throw new ArgumentResolutionException($"expected argument[{argIndex}] to be of type: {LiteralType.String} or {LiteralType.Numeric} but found uncastable[{targetProp.Name}]: {propType}");
+            }
+        }
+        else if (propType == typeof(int)) {
+            if(argument.Literal is not NumericLiteral numLit) throw new ArgumentResolutionException($"expected argument[{argIndex}] to be of type: {LiteralType.Numeric} but found uncastable[{targetProp.Name}]: {propType}");
+            propValue = numLit.AsInt;
+        }
+        else if (propType == typeof(float)) {
+            if(argument.Literal is not NumericLiteral numLit) throw new ArgumentResolutionException($"expected argument[{argIndex}] to be of type: {LiteralType.Numeric} but found uncastable[{targetProp.Name}]: {propType}");
+            propValue = numLit.AsFloat;
+        }
+        else if (propType == typeof(bool)) {
+            if(argument.Literal is not BooleanLiteral boolLit) throw new ArgumentResolutionException($"expected argument[{argIndex}] to be of type: {LiteralType.Boolean} but found uncastable[{targetProp.Name}]: {propType}");
+            propValue = boolLit.Value;
+        }
+        else {
+            throw new ArgumentResolutionException($"unsupported argument[{argIndex}] of unexpected type[{targetProp.Name}]: {propType}");
+        }
+
+        targetProp.SetValue(instance, propValue);
     }
 
     private static IQueryable<TQueryData> Affect(Parameters<TQueryData> args) {
         var spec = new TCommandSpec();
 
-        foreach(var arg in args){
-            if(SetProperty(spec, arg)) continue;
-            if(SetField(spec, arg)) continue;
-            if(SetParameter(spec, arg)) continue;
+        for(var i = 0; i < args.Length; i++){
+            try{ SetProperty(spec, i, args[i]); }
+            catch(ArgumentResolutionException are) { 
+                throw new ArgumentResolutionException($"Command: {GetIdentifier()} " + are.Message); 
+            }
         }
 
         return spec.Affect(args.SourceQuery, args.AffectAt);
@@ -154,17 +202,17 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
 
     public Runtime.Argument[] With(params Literal[] literals){
         var expectedArgumentCount = Arguments.Length;
-        var receivedArgumentCount = literals?.Length ?? 0;
+        var receivedArgumentCount = literals.Length;
         if(receivedArgumentCount != expectedArgumentCount) 
             throw new ArgumentResolutionException($"Command: {Identifier} expected {expectedArgumentCount} arguments but found {receivedArgumentCount}");
 
         var runtimeArgs = new List<Runtime.Argument>();
         for(var i = 0; i < expectedArgumentCount; i++){
-            var lit = literals![i];
+            var lit = literals[i];
             var arg = Arguments[i];
             
             if(lit.Type != arg.Type) 
-                throw new ArgumentResolutionException($"Command: {Identifier} expected argument[{i}] to be of type: {arg.Type} but found: {lit.Type}");
+                throw new ArgumentResolutionException($"Command: {Identifier} expected argument[{i}] \"{arg.Identifier}\" to be of type: {arg.Type} but found: {lit.Type}");
 
             runtimeArgs.Add( new Runtime.Argument(arg.Identifier, lit));
         }
