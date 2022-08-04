@@ -1,6 +1,8 @@
+using SearchSharp.Engine.Data.Repository;
+
 namespace SearchSharp.Engine.Commands;
 
 public abstract class CommandTemplate<TQueryData> 
     where TQueryData : QueryData {
-    public abstract IQueryable<TQueryData> Affect(IQueryable<TQueryData> query, EffectiveIn at);
+    public abstract void Affect(IDataRepository<TQueryData> repo, EffectiveIn at);
 }

@@ -1,21 +1,34 @@
 ﻿using SearchSharp.Engine;
+using SearchSharp.Engine.Commands;
+using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Data.Repository;
 
 namespace SearchSharp.Memory;
 
-public class MemoryProvider<TQueryData> : ISearchEngine<TQueryData>.IDataProvider 
+public class MemoryProvider<TQueryData> : DataProvider<TQueryData>
     where TQueryData : QueryData {
 
-    public string Name { get; }
+    public class Builder : DataProviderBuilder<Builder, TQueryData, MemoryProvider<TQueryData>>{
+        public Builder(string name = "MemoryProvider") : base(name) {
 
-    private IEnumerable<TQueryData>? _staticData = null;
+        }
+
+        public override MemoryProvider<TQueryData> Build()
+        {
+            return new MemoryProvider<TQueryData>(Name, Commands.Values.ToArray());
+        }
+    }
+
     private Func<IEnumerable<TQueryData>>? _dynamicData = null;
 
-    private MemoryProvider(string? name) { Name = name ?? "MemoryProvider"; }
+    private MemoryProvider(string? name, params ICommand<TQueryData>[] commands) : base(name ?? "MemoryProvider", commands) {
+
+    }
 
     public static MemoryProvider<TQueryData> FromStaticData(IEnumerable<TQueryData> dataSource, string? name = null){ 
         var prov = new MemoryProvider<TQueryData>(name);
 
-        prov._staticData = dataSource;
+        prov._dynamicData = () => dataSource;
 
         return prov;
     }
@@ -27,16 +40,13 @@ public class MemoryProvider<TQueryData> : ISearchEngine<TQueryData>.IDataProvide
         return prov;
     }
 
-    public Task<IQueryable<TQueryData>> DataSourceAsync(CancellationToken ct = default) {
-        return Task.FromResult(DataSource());
-    }
-    public IQueryable<TQueryData> DataSource() {
+    protected override IDataRepository<TQueryData> GetRepository()
+    {
         IQueryable<TQueryData> queryable;
 
-        if(_staticData != null) queryable = _staticData.AsQueryable();
-        else if(_dynamicData != null) queryable = _dynamicData()?.AsQueryable() ?? throw new Exception("No data source provided");
+        if(_dynamicData != null) queryable = _dynamicData()?.AsQueryable() ?? throw new Exception("No data source provided");
         else throw new Exception("No data source provided");
 
-        return queryable;
+        return new QueryRepository<TQueryData>(queryable);
     }
 }

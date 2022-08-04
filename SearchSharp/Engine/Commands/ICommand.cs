@@ -8,7 +8,7 @@ public interface ICommand<TQueryData> where TQueryData : QueryData {
     EffectiveIn EffectAt { get; }
     Argument[] Arguments { get; }
 
-    Func<Parameters<TQueryData>, IQueryable<TQueryData>> Effect { get; }
+    Action<Parameters<TQueryData>> Effect { get; }
 
     Runtime.Argument[] With(params Literal[] literals);
 }

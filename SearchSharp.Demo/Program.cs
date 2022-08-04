@@ -100,25 +100,7 @@ internal class Program
                     .AddOperator<StringLiteral>(DirectiveComparisonOperator.Equal, (data, str) => data.ProviderType == str.AsEnum<Data.Provider>())
                     .AddOperator<NumericLiteral>(DirectiveComparisonOperator.Equal, (data, num) => data.ProviderType == num.AsEnum<Data.Provider>())
                     .AddOperator((data, lower, upper) => lower.AsInt >= (int) data.ProviderType || (int) data.ProviderType <= upper.AsInt))
-                
-                //Commands
-                .WithCommand("internal", commandSpec => commandSpec
-                    .SetRuntime(EffectiveIn.Provider)
-                    .SetEffect(arg => arg.SourceQuery.Where(d => d.ProviderType == Data.Provider.Internal)))
-                .WithCommand("external", commandSpec => commandSpec
-                    .SetRuntime(EffectiveIn.Provider)
-                    .SetEffect(arg => arg.SourceQuery.Where(d => d.ProviderType == Data.Provider.External)))
-                .WithCommand("take", commandSpec => commandSpec
-                    .SetRuntime(EffectiveIn.Query)
-                    .AddArgument<NumericLiteral>("count")
-                    .SetEffect(arg => {
-                        var takeCount = (arg["count"].Literal as NumericLiteral)!.AsInt;
-                        return arg.SourceQuery.Take(takeCount);
-                    })
                 )
-                .WithCommand("fail", commandSpec => commandSpec
-                    .SetRuntime(EffectiveIn.Query | EffectiveIn.Provider)
-                    .SetEffect(arg => throw new Exception("Ops..."))))
                 
                 .AddMemoryProvider(new [] {
                     new Data { Id = 1,  Email = "john@email.com", Description = "John Sheppard, some space guy" },
@@ -146,15 +128,7 @@ internal class Program
                     .AddOperator<StringLiteral>(DirectiveComparisonOperator.Equal, (data, str) => data.AvailableOn.HasFlag(str.AsEnum<Game.Platform>()))
                     .AddOperator<NumericLiteral>(DirectiveComparisonOperator.Equal, (data, num) => data.AvailableOn.HasFlag(num.AsEnum<Game.Platform>()))
                     .AddOperator((data, lower, upper) => lower.AsInt >= (int) data.AvailableOn || upper.AsInt <= (int) data.AvailableOn))
-                .WithCommand("take", commandSpec => commandSpec
-                    .SetRuntime(EffectiveIn.Query)
-                    .AddArgument<NumericLiteral>("count")
-                    .SetEffect(arg => {
-                        var takeCount = (arg["count"].Literal as NumericLiteral)!.AsInt;
-                        return arg.SourceQuery.Take(takeCount);
-                    })
                 )
-                .WithCommand<SkipCommand>())
                 .AddMemoryProvider(new [] {
                     new Game { Name = "Zelda: Breath of the Wild", AvailableOn = Game.Platform.Nintendo },
                     new Game { Name = "Fallout 4", AvailableOn = Game.Platform.Xbox | Game.Platform.Playstation | Game.Platform.Pc },

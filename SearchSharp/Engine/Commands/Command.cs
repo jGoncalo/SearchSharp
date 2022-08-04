@@ -113,7 +113,7 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
         targetProp.SetValue(instance, propValue);
     }
 
-    private static IQueryable<TQueryData> Affect(Parameters<TQueryData> args) {
+    private static void Affect(Parameters<TQueryData> args) {
         var spec = new TCommandSpec();
 
         for(var i = 0; i < args.Length; i++){
@@ -123,7 +123,7 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
             }
         }
 
-        return spec.Affect(args.SourceQuery, args.AffectAt);
+        spec.Affect(args.Repository, args.AffectAt);
     }
 
     public Command() : base(GetIdentifier(), GetEffectiveIn(), Affect, GetArguments()) {
@@ -138,7 +138,7 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
         public readonly string Identifier;
         private EffectiveIn _effectiveIn = EffectiveIn.None;
         private readonly List<Argument> _arguments = new();
-        private Func<Parameters<TQueryData>, IQueryable<TQueryData>> _effect = arg => arg.SourceQuery;
+        private Action<Parameters<TQueryData>> _effect = arg => {};
 
         private Builder(string identifier) {
             Identifier = identifier;
@@ -161,14 +161,14 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
             return this;
         }
 
-        public Builder SetEffect(Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect) {
+        public Builder SetEffect(Action<Parameters<TQueryData>> effect) {
             _effect = effect;
             return this;
         }
 
         public Builder ResetEffect()
         {
-            _effect = arg => arg.SourceQuery;
+            _effect = arg => {};
             return this;
         }
 
@@ -191,9 +191,9 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
     public string Identifier { get; }
     public EffectiveIn EffectAt { get; }
     public Argument[] Arguments { get; }
-    public Func<Parameters<TQueryData>, IQueryable<TQueryData>> Effect { get; }
+    public Action<Parameters<TQueryData>> Effect { get; }
 
-    protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData>, IQueryable<TQueryData>> effect, params Argument[] arguments) {
+    protected Command(string identifier, EffectiveIn effectAt, Action<Parameters<TQueryData>> effect, params Argument[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
         Effect = effect;

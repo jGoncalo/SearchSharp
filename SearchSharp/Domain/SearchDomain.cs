@@ -74,16 +74,11 @@ public class SearchDomain : ISearchDomain
         
         if(!hasEngine) throw new SearchExpception("");
 
-        var queryable = engine!.Query(query, dataProvider);
-        return new SearchResult{
-            Input = new SearchInput {
-                Query = query.ToString(),
-                EvaluatedExpression = "",
-                Commands = Array.Empty<string>()
-            },
-
-            Total = queryable.Count(),
-            Content = queryable.ToArray()
+        var result = engine!.Query(query, dataProvider);
+        return new SearchResult {
+            Input = result.Input,
+            Total = result.Total,
+            Content = result.Content
         };
     }
     public Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null) {
@@ -111,17 +106,7 @@ public class SearchDomain : ISearchDomain
         
         if(!hasEngine) throw new SearchExpception("");
 
-        var queryable = engine!.Query(query, dataProvider);
-        return new SearchResult<TQueryData>{
-            Input = new SearchInput {
-                Query = query.ToString(),
-                EvaluatedExpression = "",
-                Commands = Array.Empty<string>()
-            },
-
-            Total = queryable.Count(),
-            Content = queryable.ToArray()
-        };
+        return engine!.Query(query, dataProvider);
     }
     public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
