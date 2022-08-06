@@ -28,6 +28,12 @@ public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryDat
             _commands[command.Identifier] = command;
             return this;
         }
+        public Builder WithCommand(string identifier, Action<Command<TQueryData, TDataRepository>.Builder> config){
+            var builder = Command<TQueryData, TDataRepository>.Builder.For(identifier);
+            config(builder);
+            _commands[identifier] = builder.Build();
+            return this;
+        }
         public Builder WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData, TDataRepository>, new() {
             var templatedCommand = new Command<TQueryData, TDataRepository, TCommandSpec>();
             _commands[templatedCommand.Identifier] = templatedCommand;

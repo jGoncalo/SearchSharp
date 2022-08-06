@@ -1,17 +1,12 @@
 ﻿using SearchSharp.Domain;
 using SearchSharp.Engine;
-using SearchSharp.Engine.Config;
-using SearchSharp.Engine.Rules;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Memory;
-using SearchSharp.Demo.EF.Context;
-using SearchSharp.Demo.EF.Tables;
+using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Demo.Commands;
 
 using Microsoft.Extensions.Logging;
 using Serilog;
-
-using Microsoft.EntityFrameworkCore;
-using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Demo;
 
@@ -75,6 +70,21 @@ internal class Program
                 .CreateLogger());
         
         #region Domain Setup
+        var skipCommand = Command<Data, MemoryRepository<Data>>.Builder.For("skip")
+            .SetRuntime(EffectiveIn.Query)
+            .AddArgument<NumericLiteral>("skip")
+            .SetEffect(arg => {
+                var count = Math.Max(0, (arg["count"].Literal as NumericLiteral)!.AsInt);
+                arg.Repository.Apply((query) => query.Skip(count));
+            }).Build();
+        var takeCommand = Command<Data, MemoryRepository<Data>>.Builder.For("take")
+            .SetRuntime(EffectiveIn.Query)
+            .AddArgument<NumericLiteral>("count")
+            .SetEffect(arg => {
+                var count = Math.Max(0, (arg["count"].Literal as NumericLiteral)!.AsInt);
+                arg.Repository.Apply((query) => query.Take(count));
+            }).Build();
+
         var searchDomain = new SearchDomain.Builder()
             .With<Data>("user", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
                 .SetDefaultHandler(_ => false)
@@ -110,12 +120,18 @@ internal class Program
                     new Data { Id = 17, Email = "sec@safety.com", Description = "Trusts no one", HasAuth = true},
                     new Data { Id = 18, Email = "zoe@mnstrs.com", Description = "Wraith like teeth", ProviderType = Data.Provider.External},
                     new Data { Id = 22, Email = "liv@safety.com", Description = "PowerOn people!", ProviderType = Data.Provider.External}
-                }, "users")
+                }, "users", config: provBuilder => {
+                    provBuilder.WithCommand(skipCommand);
+                    provBuilder.WithCommand(takeCommand);
+                })
                 .AddMemoryProvider(new [] {
                     new Data {Id = 100, Email = "frank@inspection.com", Description = "Hard but fair", HasAuth = true },
                     new Data {Id = 101, Email = "milly@inspection.com", Description = "Demanding", HasAuth = true },
                     new Data {Id = 102, Email = "luis@inspection.com", Description = "Never arrives late", HasAuth = false }
-                }, "inspectors"))
+                }, "inspectors", config: provBuilder => {
+                    provBuilder.WithCommand(skipCommand);
+                    provBuilder.WithCommand(takeCommand);
+                }))
             .With<Game>("games", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
                 .SetDefaultHandler(_ => false)
                 .SetStringRule((data, str) => data.Name.Contains(str))
@@ -136,9 +152,9 @@ internal class Program
                     new Game { Name = "Halo 5", AvailableOn = Game.Platform.Xbox },
                     new Game { Name = "God Of War", AvailableOn = Game.Platform.Playstation | Game.Platform.Pc },
                     new Game { Name = "Bloodborn", AvailableOn = Game.Platform.Playstation }
-                }, "Gen8", config: (providerBuilder) => {
-                    providerBuilder.WithCommand<SkipCommand>();
-                })
+                }, "Gen8", config: (providerBuilder) => providerBuilder.WithCommand<SkipCommand>()
+                    .WithCommand<TakeCommand>()
+                    .WithCommand<ExclusiveCommand>())
                 .AddMemoryProvider(new [] {
                     new Game { Name = "Zelda: Breath of the Wild 2", AvailableOn = Game.Platform.Nintendo },
                     new Game { Name = "Starfield", AvailableOn = Game.Platform.Xbox | Game.Platform.Pc },
@@ -146,7 +162,9 @@ internal class Program
                     new Game { Name = "Halo Infinite", AvailableOn = Game.Platform.Xbox | Game.Platform.Pc },
                     new Game { Name = "Destiny 3", AvailableOn = Game.Platform.Playstation | Game.Platform.Pc },
                     new Game { Name = "God Of War Ragnarok", AvailableOn = Game.Platform.Playstation }
-                }, "Gen9"))
+                }, "Gen9", config: (providerBuilder) => providerBuilder.WithCommand<SkipCommand>()
+                    .WithCommand<TakeCommand>()
+                    .WithCommand<ExclusiveCommand>()))
                 .Build();
         #endregion
 

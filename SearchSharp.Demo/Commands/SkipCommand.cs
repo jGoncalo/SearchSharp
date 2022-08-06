@@ -2,18 +2,16 @@ using SearchSharp.Attributes;
 using SearchSharp.Memory;
 using SearchSharp.Engine.Commands;
 
-namespace SearchSharp.Demo;
+namespace SearchSharp.Demo.Commands;
 
-[Command("skip", EffectiveIn.Query)]
+[Command("skip", EffectiveIn.Provider)]
 public class SkipCommand : CommandTemplate<Game, MemoryRepository<Game>>
 {
     [Argument("count", 0)]
-    public int SkipCount { get; set; }
-    [Argument("random", 1)]
-    public string Ignore { get; set; } = string.Empty;
+    public int Count { get; set; }
 
     public override void Affect(MemoryRepository<Game> repo, EffectiveIn at)
     {
-        repo.Apply((query) => query.Skip(SkipCount));
+        repo.Apply((query) => query.Skip(Count));
     }
 }
