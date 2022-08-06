@@ -5,13 +5,13 @@ namespace SearchSharp.Engine;
 
 using SearchSharp.Exceptions;
 using SearchSharp.Engine.Config;
+using SearchSharp.Engine.Data;
 using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Evaluators;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using SearchSharp.Engine.Evaluators.Visitor;
 using SearchSharp.Domain;
-using SearchSharp.Engine.Data;
 using Sprache;
 using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;

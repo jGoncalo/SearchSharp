@@ -136,7 +136,9 @@ internal class Program
                     new Game { Name = "Halo 5", AvailableOn = Game.Platform.Xbox },
                     new Game { Name = "God Of War", AvailableOn = Game.Platform.Playstation | Game.Platform.Pc },
                     new Game { Name = "Bloodborn", AvailableOn = Game.Platform.Playstation }
-                }, "Gen8")
+                }, "Gen8", config: (providerBuilder) => {
+                    providerBuilder.WithCommand<SkipCommand>();
+                })
                 .AddMemoryProvider(new [] {
                     new Game { Name = "Zelda: Breath of the Wild 2", AvailableOn = Game.Platform.Nintendo },
                     new Game { Name = "Starfield", AvailableOn = Game.Platform.Xbox | Game.Platform.Pc },

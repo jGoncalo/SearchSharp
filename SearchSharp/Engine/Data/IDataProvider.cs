@@ -7,8 +7,8 @@ namespace SearchSharp.Engine.Data;
 
 public interface IDataProvider<TQueryData> 
     where TQueryData : QueryData {
-    public string Name { get; }
-    public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
+    string Name { get; }
 
+    IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
     ISearchResult<TQueryData> ExecuteQuery(Query query, Expression<Func<TQueryData, bool>> expression);
 }

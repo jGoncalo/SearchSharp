@@ -1,13 +1,15 @@
 using SearchSharp.Attributes;
+using SearchSharp.Engine.Data;
 using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
 
 namespace SearchSharp.Engine.Commands;
 
-public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
+public class Command<TQueryData, TDataRepository, TCommandSpec> : Command<TQueryData, TDataRepository>
     where TQueryData : QueryData
-    where TCommandSpec : CommandTemplate<TQueryData>, new() {
+    where TDataRepository : IDataRepository<TQueryData>
+    where TCommandSpec : CommandTemplate<TQueryData, TDataRepository>, new() {
     
     private static LiteralType ToLiteralType(Type type){
         if(type == typeof(int) || type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return LiteralType.Numeric;
@@ -113,7 +115,7 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
         targetProp.SetValue(instance, propValue);
     }
 
-    private static void Affect(Parameters<TQueryData> args) {
+    private static void Affect(Parameters<TQueryData, TDataRepository> args) {
         var spec = new TCommandSpec();
 
         for(var i = 0; i < args.Length; i++){
@@ -132,13 +134,15 @@ public class Command<TQueryData, TCommandSpec> : Command<TQueryData>
 
 }
 
-public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : QueryData {
+public class Command<TQueryData, TDataRepository> : ICommand<TQueryData, TDataRepository> 
+    where TQueryData : QueryData
+    where TDataRepository : IDataRepository<TQueryData> {
     public class Builder
     {
         public readonly string Identifier;
         private EffectiveIn _effectiveIn = EffectiveIn.None;
         private readonly List<Argument> _arguments = new();
-        private Action<Parameters<TQueryData>> _effect = arg => {};
+        private Action<Parameters<TQueryData, TDataRepository>> _effect = arg => {};
 
         private Builder(string identifier) {
             Identifier = identifier;
@@ -161,7 +165,7 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
             return this;
         }
 
-        public Builder SetEffect(Action<Parameters<TQueryData>> effect) {
+        public Builder SetEffect(Action<Parameters<TQueryData, TDataRepository>> effect) {
             _effect = effect;
             return this;
         }
@@ -172,7 +176,7 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
             return this;
         }
 
-        public Command<TQueryData> Build() {
+        public Command<TQueryData, TDataRepository> Build() {
             var argForm = new HashSet<string>();
             var argList = new List<Argument>();
 
@@ -183,7 +187,7 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
                 argForm.Add(arg.Identifier);
             }
             
-            return new Command<TQueryData>(Identifier, _effectiveIn, _effect, 
+            return new Command<TQueryData, TDataRepository>(Identifier, _effectiveIn, _effect, 
                 argList.ToArray());
         }
     }
@@ -191,9 +195,9 @@ public class Command<TQueryData> : ICommand<TQueryData> where TQueryData : Query
     public string Identifier { get; }
     public EffectiveIn EffectAt { get; }
     public Argument[] Arguments { get; }
-    public Action<Parameters<TQueryData>> Effect { get; }
+    public Action<Parameters<TQueryData, TDataRepository>> Effect { get; }
 
-    protected Command(string identifier, EffectiveIn effectAt, Action<Parameters<TQueryData>> effect, params Argument[] arguments) {
+    protected Command(string identifier, EffectiveIn effectAt, Action<Parameters<TQueryData, TDataRepository>> effect, params Argument[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
         Effect = effect;

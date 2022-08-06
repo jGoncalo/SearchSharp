@@ -1,52 +1,46 @@
-﻿using SearchSharp.Engine;
-using SearchSharp.Engine.Commands;
+﻿using System.Linq.Expressions;
+using SearchSharp.Engine;
 using SearchSharp.Engine.Data;
-using SearchSharp.Engine.Data.Repository;
 
 namespace SearchSharp.Memory;
 
-public class MemoryProvider<TQueryData> : DataProvider<TQueryData>
+public class MemoryProviderFactory<TQueryData> : IDataProviderFactory<TQueryData, MemoryRepository<TQueryData>> where TQueryData : QueryData {
+    private readonly Func<IEnumerable<TQueryData>> _getData;
+    
+    private MemoryProviderFactory(Func<IEnumerable<TQueryData>> dataSource) {
+        _getData = dataSource;
+    }
+
+    public static MemoryProviderFactory<TQueryData> FromStaticData(IEnumerable<TQueryData> dataSource){ 
+        return new MemoryProviderFactory<TQueryData>(() => dataSource);
+    }
+    public static MemoryProviderFactory<TQueryData> FromDynamicData(Func<IEnumerable<TQueryData>> dataSource){ 
+        return new MemoryProviderFactory<TQueryData>(dataSource);
+    }
+
+    public MemoryRepository<TQueryData> Instance(){
+        return new MemoryRepository<TQueryData>(_getData().AsQueryable());
+    }
+}
+
+public class MemoryRepository<TQueryData> : IDataRepository<TQueryData>
     where TQueryData : QueryData {
 
-    public class Builder : DataProviderBuilder<Builder, TQueryData, MemoryProvider<TQueryData>>{
-        public Builder(string name = "MemoryProvider") : base(name) {
+    public delegate IQueryable<TQueryData> Modify(IQueryable<TQueryData> query);
 
-        }
+    private IQueryable<TQueryData> _query;
 
-        public override MemoryProvider<TQueryData> Build()
-        {
-            return new MemoryProvider<TQueryData>(Name, Commands.Values.ToArray());
-        }
+    internal MemoryRepository(IQueryable<TQueryData> data) {
+        _query = data;
     }
 
-    private Func<IEnumerable<TQueryData>>? _dynamicData = null;
-
-    private MemoryProvider(string? name, params ICommand<TQueryData>[] commands) : base(name ?? "MemoryProvider", commands) {
-
+    public void Apply(Modify modifier){
+        _query = modifier(_query);
     }
-
-    public static MemoryProvider<TQueryData> FromStaticData(IEnumerable<TQueryData> dataSource, string? name = null){ 
-        var prov = new MemoryProvider<TQueryData>(name);
-
-        prov._dynamicData = () => dataSource;
-
-        return prov;
-    }
-    public static MemoryProvider<TQueryData> FromDynamicData(Func<IEnumerable<TQueryData>> dataSource, string? name = null){ 
-        var prov = new MemoryProvider<TQueryData>(name);
-
-        prov._dynamicData = dataSource;
-
-        return prov;
-    }
-
-    protected override IDataRepository<TQueryData> GetRepository()
+    public void Apply(Expression<Func<TQueryData, bool>> condition)
     {
-        IQueryable<TQueryData> queryable;
-
-        if(_dynamicData != null) queryable = _dynamicData()?.AsQueryable() ?? throw new Exception("No data source provided");
-        else throw new Exception("No data source provided");
-
-        return new QueryRepository<TQueryData>(queryable);
+        _query = _query.Where(condition);
     }
+    public int Count() => _query.Count();
+    public TQueryData[] Fetch() => _query.ToArray();
 }

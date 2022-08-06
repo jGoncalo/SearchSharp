@@ -1,14 +1,16 @@
 using System.Collections;
-using SearchSharp.Engine.Data.Repository;
+using SearchSharp.Engine.Data;
 
 namespace SearchSharp.Engine.Commands.Runtime;
 
-public readonly struct Parameters<TQueryData> : IEnumerable<Argument> where TQueryData : QueryData {
-    public readonly IDataRepository<TQueryData> Repository;
+public readonly struct Parameters<TQueryData, TDataRepository> : IEnumerable<Argument> 
+    where TQueryData : QueryData 
+    where TDataRepository : IDataRepository<TQueryData> {
+    public readonly TDataRepository Repository;
     public readonly EffectiveIn AffectAt;
     private readonly IReadOnlyDictionary<string, Argument> _arguments;
 
-    public Parameters(EffectiveIn affectAt, IDataRepository<TQueryData> repository, params Argument[] arguments) {
+    public Parameters(EffectiveIn affectAt, TDataRepository repository, params Argument[] arguments) {
         Repository = repository;
         AffectAt = affectAt;
         _arguments = (arguments ?? Array.Empty<Argument>()).ToDictionary(arg => arg.Identifier);

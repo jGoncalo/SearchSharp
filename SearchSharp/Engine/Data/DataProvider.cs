@@ -4,60 +4,72 @@ using SearchSharp.Engine.Commands;
 using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Exceptions;
 using SearchSharp.Engine.Parser.Components;
-using SearchSharp.Engine.Data.Repository;
 
 namespace SearchSharp.Engine.Data;
 
-public abstract class DataProviderBuilder<TSelf, TQueryData, TProvider> 
-    where TQueryData : QueryData
-    where TProvider : DataProvider<TQueryData>
-    where TSelf : DataProviderBuilder<TSelf, TQueryData, TProvider> {
+public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryData>
+    where TQueryData : QueryData 
+    where TDataRepository : IDataRepository<TQueryData> {
 
-    public readonly string Name;
-    protected readonly Dictionary<string, ICommand<TQueryData>> Commands;
+    public class Builder {
+        private readonly string Name;
 
-    protected DataProviderBuilder(string name) {
-        Name = name;
-        Commands = new Dictionary<string, ICommand<TQueryData>>();
+        private IDataProviderFactory<TQueryData, TDataRepository> _repositoryFactory;
+
+        private readonly Dictionary<string, ICommand<TQueryData, TDataRepository>> _commands = new();
+
+        public Builder(string name, IDataProviderFactory<TQueryData, TDataRepository> factory) {
+            Name = name;
+            _repositoryFactory = factory;
+        }
+
+        #region Commands
+        public Builder WithCommand(ICommand<TQueryData, TDataRepository> command){
+            _commands[command.Identifier] = command;
+            return this;
+        }
+        public Builder WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData, TDataRepository>, new() {
+            var templatedCommand = new Command<TQueryData, TDataRepository, TCommandSpec>();
+            _commands[templatedCommand.Identifier] = templatedCommand;
+            return this;
+        }
+        public Builder RemoveCommand(string identifier) {
+            _commands.Remove(identifier);
+            return this;
+        }
+        #endregion
+    
+        public DataProvider<TQueryData, TDataRepository> Build() {
+            return new DataProvider<TQueryData, TDataRepository>(Name, 
+                _repositoryFactory,
+                _commands.Values.ToArray());
+        }
     }
-
-    public TSelf WithCommand(ICommand<TQueryData> command){
-        Commands[command.Identifier] = command;
-        return (TSelf) this;
-    }
-    public TSelf WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData>, new() {
-        var templatedCommand = new Command<TQueryData, TCommandSpec>();
-        Commands[templatedCommand.Identifier] = templatedCommand;
-        return (TSelf) this;
-    }
-    public TSelf RemoveCommand(string identifier) {
-        Commands.Remove(identifier);
-        return (TSelf) this;
-    }
-
-    public abstract TProvider Build();
-}
-
-public abstract class DataProvider<TQueryData> : IDataProvider<TQueryData>
-    where TQueryData : QueryData {
 
     public string Name { get; }
 
-    public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
+    private readonly IDataProviderFactory<TQueryData, TDataRepository> _repositoryFactory;
 
-    protected DataProvider(string name, params ICommand<TQueryData>[] commands){
+    public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands => _commands
+        .ToDictionary(keySelector: kv => kv.Key, elementSelector: kv => kv.Value as ICommand<TQueryData>);
+    private readonly IReadOnlyDictionary<string, ICommand<TQueryData, TDataRepository>> _commands;
+
+    private DataProvider(string name, 
+        IDataProviderFactory<TQueryData, TDataRepository> repositoryFactory,
+        params ICommand<TQueryData, TDataRepository>[] commands){
         Name = name;
-        Commands = commands.ToDictionary(keySelector: cmd => cmd.Identifier, elementSelector: cmd => cmd);
+
+        _repositoryFactory = repositoryFactory;
+
+        _commands = commands.ToDictionary(keySelector: cmd => cmd.Identifier, elementSelector: cmd => cmd);
     }
 
-    protected abstract IDataRepository<TQueryData> GetRepository();
-
-    private void ApplyRules(Query query, IDataRepository<TQueryData> dataRepo, EffectiveIn effectIn){
+    private void ApplyRules(Query query, TDataRepository dataRepo, EffectiveIn effectIn){
         foreach(var command in query.Commands) {
-            if(Commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
+            if(_commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
                 var arguments = cmd.With(command.Arguments.Literals);
                 try{
-                    cmd.Effect(new Parameters<TQueryData>(effectIn, dataRepo, arguments));
+                    cmd.Effect(new Parameters<TQueryData, TDataRepository>(effectIn, dataRepo, arguments));
                 }
                 catch(Exception exp){
                     var argumentStr = arguments.Count() == 0 ? string.Empty : arguments
@@ -70,7 +82,7 @@ public abstract class DataProvider<TQueryData> : IDataProvider<TQueryData>
     }
 
     public ISearchResult<TQueryData> ExecuteQuery(Query query, Expression<Func<TQueryData, bool>> expression){
-        var repo = GetRepository();
+        var repo = (TDataRepository) _repositoryFactory.Instance();
         ApplyRules(query, repo, EffectiveIn.Provider);
         repo.Apply(expression);
         ApplyRules(query, repo, EffectiveIn.Query);
