@@ -70,19 +70,19 @@ internal class Program
                 .CreateLogger());
         
         #region Domain Setup
-        var skipCommand = Command<Data, MemoryRepository<Data>>.Builder.For("skip")
+        var skipCommand = Command<Data, IQueryable<Data>>.Builder.For("skip")
             .SetRuntime(EffectiveIn.Query)
             .AddArgument<NumericLiteral>("skip")
             .SetEffect(arg => {
                 var count = Math.Max(0, (arg["count"].Literal as NumericLiteral)!.AsInt);
-                arg.Repository.Apply((query) => query.Skip(count));
+                return arg.DataSet.Skip(count);
             }).Build();
-        var takeCommand = Command<Data, MemoryRepository<Data>>.Builder.For("take")
+        var takeCommand = Command<Data, IQueryable<Data>>.Builder.For("take")
             .SetRuntime(EffectiveIn.Query)
             .AddArgument<NumericLiteral>("count")
             .SetEffect(arg => {
                 var count = Math.Max(0, (arg["count"].Literal as NumericLiteral)!.AsInt);
-                arg.Repository.Apply((query) => query.Take(count));
+                return arg.DataSet.Take(count);
             }).Build();
 
         var searchDomain = new SearchDomain.Builder()

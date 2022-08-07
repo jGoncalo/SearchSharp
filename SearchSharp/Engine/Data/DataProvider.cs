@@ -7,35 +7,36 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Data;
 
-public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryData>
+public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<TQueryData>
     where TQueryData : QueryData 
-    where TDataRepository : IDataRepository<TQueryData> {
+    where TDataStructure : class
+    where TDataRepository : IRepository<TQueryData, TDataStructure> {
 
     public class Builder {
         private readonly string Name;
 
-        private IDataProviderFactory<TQueryData, TDataRepository> _repositoryFactory;
+        private IRepositoryFactory<TQueryData, TDataRepository, TDataStructure> _repositoryFactory;
 
-        private readonly Dictionary<string, ICommand<TQueryData, TDataRepository>> _commands = new();
+        private readonly Dictionary<string, ICommand<TQueryData, TDataStructure>> _commands = new();
 
-        public Builder(string name, IDataProviderFactory<TQueryData, TDataRepository> factory) {
+        public Builder(string name, IRepositoryFactory<TQueryData, TDataRepository,  TDataStructure> factory) {
             Name = name;
             _repositoryFactory = factory;
         }
 
         #region Commands
-        public Builder WithCommand(ICommand<TQueryData, TDataRepository> command){
+        public Builder WithCommand(ICommand<TQueryData, TDataStructure> command){
             _commands[command.Identifier] = command;
             return this;
         }
-        public Builder WithCommand(string identifier, Action<Command<TQueryData, TDataRepository>.Builder> config){
-            var builder = Command<TQueryData, TDataRepository>.Builder.For(identifier);
+        public Builder WithCommand(string identifier, Action<Command<TQueryData, TDataStructure>.Builder> config){
+            var builder = Command<TQueryData, TDataStructure>.Builder.For(identifier);
             config(builder);
             _commands[identifier] = builder.Build();
             return this;
         }
-        public Builder WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData, TDataRepository>, new() {
-            var templatedCommand = new Command<TQueryData, TDataRepository, TCommandSpec>();
+        public Builder WithCommand<TCommandSpec>() where TCommandSpec : CommandTemplate<TQueryData, TDataStructure>, new() {
+            var templatedCommand = new Command<TQueryData, TDataStructure, TCommandSpec>();
             _commands[templatedCommand.Identifier] = templatedCommand;
             return this;
         }
@@ -45,8 +46,8 @@ public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryDat
         }
         #endregion
     
-        public DataProvider<TQueryData, TDataRepository> Build() {
-            return new DataProvider<TQueryData, TDataRepository>(Name, 
+        public Provider<TQueryData, TDataRepository, TDataStructure> Build() {
+            return new Provider<TQueryData, TDataRepository, TDataStructure>(Name, 
                 _repositoryFactory,
                 _commands.Values.ToArray());
         }
@@ -54,15 +55,15 @@ public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryDat
 
     public string Name { get; }
 
-    private readonly IDataProviderFactory<TQueryData, TDataRepository> _repositoryFactory;
+    private readonly IRepositoryFactory<TQueryData, TDataRepository, TDataStructure> _repositoryFactory;
 
     public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands => _commands
         .ToDictionary(keySelector: kv => kv.Key, elementSelector: kv => kv.Value as ICommand<TQueryData>);
-    private readonly IReadOnlyDictionary<string, ICommand<TQueryData, TDataRepository>> _commands;
+    private readonly IReadOnlyDictionary<string, ICommand<TQueryData, TDataStructure>> _commands;
 
-    private DataProvider(string name, 
-        IDataProviderFactory<TQueryData, TDataRepository> repositoryFactory,
-        params ICommand<TQueryData, TDataRepository>[] commands){
+    private Provider(string name, 
+        IRepositoryFactory<TQueryData, TDataRepository, TDataStructure> repositoryFactory,
+        params ICommand<TQueryData, TDataStructure>[] commands){
         Name = name;
 
         _repositoryFactory = repositoryFactory;
@@ -70,12 +71,14 @@ public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryDat
         _commands = commands.ToDictionary(keySelector: cmd => cmd.Identifier, elementSelector: cmd => cmd);
     }
 
-    private void ApplyRules(Query query, TDataRepository dataRepo, EffectiveIn effectIn){
+    private TDataStructure ApplyRules(Query query, TDataStructure dataSet, EffectiveIn effectIn){
+        var affectedSet = dataSet;
+
         foreach(var command in query.Commands) {
             if(_commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
                 var arguments = cmd.With(command.Arguments.Literals);
                 try{
-                    cmd.Effect(new Parameters<TQueryData, TDataRepository>(effectIn, dataRepo, arguments));
+                    affectedSet = cmd.Effect(new Parameters<TQueryData, TDataStructure>(effectIn, dataSet, arguments));
                 }
                 catch(Exception exp){
                     var argumentStr = arguments.Count() == 0 ? string.Empty : arguments
@@ -85,13 +88,16 @@ public class DataProvider<TQueryData, TDataRepository> : IDataProvider<TQueryDat
                 }
             }
         }
+        
+        return affectedSet;
     }
 
     public ISearchResult<TQueryData> ExecuteQuery(Query query, Expression<Func<TQueryData, bool>> expression){
         var repo = (TDataRepository) _repositoryFactory.Instance();
-        ApplyRules(query, repo, EffectiveIn.Provider);
+        
+        repo.Modify(dataSet => ApplyRules(query, dataSet, EffectiveIn.Provider));
         repo.Apply(expression);
-        ApplyRules(query, repo, EffectiveIn.Query);
+        repo.Modify(dataSet => ApplyRules(query, dataSet, EffectiveIn.Query));
         
         return new SearchResult<TQueryData>{
             Total = repo.Count(),

@@ -1,15 +1,14 @@
 using SearchSharp.Attributes;
-using SearchSharp.Engine.Data;
 using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
 
 namespace SearchSharp.Engine.Commands;
 
-public class Command<TQueryData, TDataRepository, TCommandSpec> : Command<TQueryData, TDataRepository>
+public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryData, TDataStructure>
     where TQueryData : QueryData
-    where TDataRepository : IDataRepository<TQueryData>
-    where TCommandSpec : CommandTemplate<TQueryData, TDataRepository>, new() {
+    where TDataStructure : class
+    where TCommandSpec : CommandTemplate<TQueryData, TDataStructure>, new() {
     
     private static LiteralType ToLiteralType(Type type){
         if(type == typeof(int) || type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return LiteralType.Numeric;
@@ -115,7 +114,7 @@ public class Command<TQueryData, TDataRepository, TCommandSpec> : Command<TQuery
         targetProp.SetValue(instance, propValue);
     }
 
-    private static void Affect(Parameters<TQueryData, TDataRepository> args) {
+    private static TDataStructure Affect(Parameters<TQueryData, TDataStructure> args) {
         var spec = new TCommandSpec();
 
         for(var i = 0; i < args.Length; i++){
@@ -125,7 +124,7 @@ public class Command<TQueryData, TDataRepository, TCommandSpec> : Command<TQuery
             }
         }
 
-        spec.Affect(args.Repository, args.AffectAt);
+        return spec.Affect(args.DataSet, args.AffectAt);
     }
 
     public Command() : base(GetIdentifier(), GetEffectiveIn(), Affect, GetArguments()) {
@@ -134,15 +133,15 @@ public class Command<TQueryData, TDataRepository, TCommandSpec> : Command<TQuery
 
 }
 
-public class Command<TQueryData, TDataRepository> : ICommand<TQueryData, TDataRepository> 
+public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStructure> 
     where TQueryData : QueryData
-    where TDataRepository : IDataRepository<TQueryData> {
+    where TDataStructure : class {
     public class Builder
     {
         public readonly string Identifier;
         private EffectiveIn _effectiveIn = EffectiveIn.None;
         private readonly List<Argument> _arguments = new();
-        private Action<Parameters<TQueryData, TDataRepository>> _effect = arg => {};
+        private Func<Parameters<TQueryData, TDataStructure>, TDataStructure> _effect = (arg) => arg.DataSet;
 
         private Builder(string identifier) {
             Identifier = identifier;
@@ -165,18 +164,18 @@ public class Command<TQueryData, TDataRepository> : ICommand<TQueryData, TDataRe
             return this;
         }
 
-        public Builder SetEffect(Action<Parameters<TQueryData, TDataRepository>> effect) {
+        public Builder SetEffect(Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect) {
             _effect = effect;
             return this;
         }
 
         public Builder ResetEffect()
         {
-            _effect = arg => {};
+            _effect = arg => arg.DataSet;
             return this;
         }
 
-        public Command<TQueryData, TDataRepository> Build() {
+        public Command<TQueryData, TDataStructure> Build() {
             var argForm = new HashSet<string>();
             var argList = new List<Argument>();
 
@@ -187,7 +186,7 @@ public class Command<TQueryData, TDataRepository> : ICommand<TQueryData, TDataRe
                 argForm.Add(arg.Identifier);
             }
             
-            return new Command<TQueryData, TDataRepository>(Identifier, _effectiveIn, _effect, 
+            return new Command<TQueryData, TDataStructure>(Identifier, _effectiveIn, _effect, 
                 argList.ToArray());
         }
     }
@@ -195,9 +194,9 @@ public class Command<TQueryData, TDataRepository> : ICommand<TQueryData, TDataRe
     public string Identifier { get; }
     public EffectiveIn EffectAt { get; }
     public Argument[] Arguments { get; }
-    public Action<Parameters<TQueryData, TDataRepository>> Effect { get; }
+    public Func<Parameters<TQueryData, TDataStructure>, TDataStructure> Effect { get; }
 
-    protected Command(string identifier, EffectiveIn effectAt, Action<Parameters<TQueryData, TDataRepository>> effect, params Argument[] arguments) {
+    protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect, params Argument[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
         Effect = effect;

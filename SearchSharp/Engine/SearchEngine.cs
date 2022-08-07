@@ -22,7 +22,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     public class Builder {
         private readonly string _alias;
         private ISearchEngine<TQueryData>.IConfig _config;
-        private Dictionary<string, IDataProvider<TQueryData>> _dataProviders = new Dictionary<string, IDataProvider<TQueryData>>();
+        private Dictionary<string, IProvider<TQueryData>> _dataProviders = new Dictionary<string, IProvider<TQueryData>>();
         private string _defaultProvider = string.Empty;
 
         public Builder(string alias){
@@ -44,7 +44,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         #endregion
 
         #region Providers
-        public Builder RegisterProvider(IDataProvider<TQueryData> provider, bool isDefault = false){
+        public Builder RegisterProvider(IProvider<TQueryData> provider, bool isDefault = false){
             _dataProviders[provider.Name] = provider;
 
             if(string.IsNullOrWhiteSpace(_defaultProvider) || isDefault) _defaultProvider = provider.Name;
@@ -78,12 +78,12 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
     private readonly ISearchEngine<TQueryData>.IConfig _config;
     private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
-    private readonly IReadOnlyDictionary<string, IDataProvider<TQueryData>> _dataProviders;
+    private readonly IReadOnlyDictionary<string, IProvider<TQueryData>> _dataProviders;
     private readonly string _defaultProvider;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
     private SearchEngine(string alias, ISearchEngine<TQueryData>.IConfig config, 
-        IReadOnlyDictionary<string, IDataProvider<TQueryData>> providers,
+        IReadOnlyDictionary<string, IProvider<TQueryData>> providers,
         string defaultProvider){
         Alias = alias;
         DataType = typeof(TQueryData);

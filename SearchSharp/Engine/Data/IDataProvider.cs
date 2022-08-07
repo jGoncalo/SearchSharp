@@ -5,7 +5,7 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Data;
 
-public interface IDataProvider<TQueryData> 
+public interface IProvider<TQueryData> 
     where TQueryData : QueryData {
     string Name { get; }
 

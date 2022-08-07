@@ -4,7 +4,7 @@ using SearchSharp.Engine.Data;
 
 namespace SearchSharp.Memory;
 
-public class MemoryProviderFactory<TQueryData> : IDataProviderFactory<TQueryData, MemoryRepository<TQueryData>> where TQueryData : QueryData {
+public class MemoryProviderFactory<TQueryData> : IRepositoryFactory<TQueryData, MemoryRepository<TQueryData>, IQueryable<TQueryData>> where TQueryData : QueryData {
     private readonly Func<IEnumerable<TQueryData>> _getData;
     
     private MemoryProviderFactory(Func<IEnumerable<TQueryData>> dataSource) {
@@ -23,24 +23,22 @@ public class MemoryProviderFactory<TQueryData> : IDataProviderFactory<TQueryData
     }
 }
 
-public class MemoryRepository<TQueryData> : IDataRepository<TQueryData>
+public class MemoryRepository<TQueryData> : IRepository<TQueryData, IQueryable<TQueryData>>
     where TQueryData : QueryData {
 
-    public delegate IQueryable<TQueryData> Modify(IQueryable<TQueryData> query);
-
-    private IQueryable<TQueryData> _query;
+    public IQueryable<TQueryData> DataSet { get; private set;}
 
     internal MemoryRepository(IQueryable<TQueryData> data) {
-        _query = data;
+        DataSet = data;
     }
 
-    public void Apply(Modify modifier){
-        _query = modifier(_query);
+    public void Modify(Func<IQueryable<TQueryData>, IQueryable<TQueryData>> modifer) {
+        DataSet = modifer(DataSet);
     }
     public void Apply(Expression<Func<TQueryData, bool>> condition)
     {
-        _query = _query.Where(condition);
+        DataSet = DataSet.Where(condition);
     }
-    public int Count() => _query.Count();
-    public TQueryData[] Fetch() => _query.ToArray();
+    public int Count() => DataSet.Count();
+    public TQueryData[] Fetch() => DataSet.ToArray();
 }

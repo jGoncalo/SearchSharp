@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace SearchSharp.EntityFramework;
 
-public class ContextRepositoryFactory<TContext, TQueryData> : IDataProviderFactory<TQueryData, ContextRepository<TContext, TQueryData>>
+public class ContextRepositoryFactory<TContext, TQueryData> : IRepositoryFactory<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>
      where TQueryData : QueryData
      where TContext : DbContext
 {
@@ -25,30 +25,30 @@ public class ContextRepositoryFactory<TContext, TQueryData> : IDataProviderFacto
     }
 }
 
-public class ContextRepository<TContext, TQueryData> : IDataRepository<TQueryData>
+public class ContextRepository<TContext, TQueryData> : IRepository<TQueryData, IQueryable<TQueryData>>
     where TQueryData : QueryData
     where TContext : DbContext
 {
     public delegate IQueryable<TQueryData> Selector(TContext context);
-    public delegate IQueryable<TQueryData> Modify(IQueryable<TQueryData> query);
 
     private readonly TContext _context;
-    private IQueryable<TQueryData> _query;
+    public IQueryable<TQueryData> DataSet { get; private set; }
 
     public ContextRepository(TContext context, Selector setSelector){
         _context = context;
-        _query = setSelector(context);
+        DataSet = setSelector(context);
     }
 
-    public void Apply(Modify modifer){
-        _query = modifer(_query);
+    public void Modify(Func<IQueryable<TQueryData>, IQueryable<TQueryData>> modifer) {
+        DataSet = modifer(DataSet);
     }
+
     public void Apply(Expression<Func<TQueryData, bool>> condition)
     {
-        _query = _query.Where(condition);
+        DataSet = DataSet.Where(condition);
     }
 
-    public int Count() => _query.Count();
+    public int Count() => DataSet.Count();
 
-    public TQueryData[] Fetch() => _query.ToArray();
+    public TQueryData[] Fetch() => DataSet.ToArray();
 }

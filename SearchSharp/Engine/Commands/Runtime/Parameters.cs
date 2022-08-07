@@ -3,15 +3,15 @@ using SearchSharp.Engine.Data;
 
 namespace SearchSharp.Engine.Commands.Runtime;
 
-public readonly struct Parameters<TQueryData, TDataRepository> : IEnumerable<Argument> 
+public readonly struct Parameters<TQueryData, TDataStructure> : IEnumerable<Argument> 
     where TQueryData : QueryData 
-    where TDataRepository : IDataRepository<TQueryData> {
-    public readonly TDataRepository Repository;
+    where TDataStructure : class {
+    public readonly TDataStructure DataSet;
     public readonly EffectiveIn AffectAt;
     private readonly IReadOnlyDictionary<string, Argument> _arguments;
 
-    public Parameters(EffectiveIn affectAt, TDataRepository repository, params Argument[] arguments) {
-        Repository = repository;
+    public Parameters(EffectiveIn affectAt, TDataStructure dataSet, params Argument[] arguments) {
+        DataSet = dataSet;
         AffectAt = affectAt;
         _arguments = (arguments ?? Array.Empty<Argument>()).ToDictionary(arg => arg.Identifier);
     }

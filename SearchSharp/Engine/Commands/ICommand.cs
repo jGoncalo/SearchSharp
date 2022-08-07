@@ -1,5 +1,4 @@
 using SearchSharp.Engine.Commands.Runtime;
-using SearchSharp.Engine.Data;
 using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Commands;
@@ -12,9 +11,9 @@ public interface ICommand<TQueryData> where TQueryData : QueryData {
     Runtime.Argument[] With(params Literal[] literals);
 }
 
-public interface ICommand<TQueryData, TDataRepository> : ICommand<TQueryData>
+public interface ICommand<TQueryData, TDataStructure> : ICommand<TQueryData>
     where TQueryData : QueryData
-    where TDataRepository : IDataRepository<TQueryData> {
+    where TDataStructure : class {
 
-    Action<Parameters<TQueryData, TDataRepository>> Effect { get; }
+    Func<Parameters<TQueryData, TDataStructure>, TDataStructure> Effect { get; }
 }

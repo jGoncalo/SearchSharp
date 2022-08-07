@@ -8,10 +8,10 @@ public static class Extensions {
         IEnumerable<TQueryData> data,
         string providerName = "MemoryProvider",
         bool isDefault = false,
-        Action<DataProvider<TQueryData, MemoryRepository<TQueryData>>.Builder>? config = null) where TQueryData : QueryData {
+        Action<Provider<TQueryData, MemoryRepository<TQueryData>, IQueryable<TQueryData>>.Builder>? config = null) where TQueryData : QueryData {
         var repoFactory = MemoryProviderFactory<TQueryData>.FromStaticData(data);
 
-        var providerBuilder = new DataProvider<TQueryData, MemoryRepository<TQueryData>>.Builder(providerName, repoFactory);
+        var providerBuilder = new Provider<TQueryData, MemoryRepository<TQueryData>, IQueryable<TQueryData>>.Builder(providerName, repoFactory);
         if(config != null) config(providerBuilder);
         builder.RegisterProvider(providerBuilder.Build(), isDefault);
 
@@ -21,10 +21,10 @@ public static class Extensions {
         Func<IEnumerable<TQueryData>> source,
         string providerName = "MemoryProvider",
         bool isDefault = false,
-        Action<DataProvider<TQueryData, MemoryRepository<TQueryData>>.Builder>? config = null) where TQueryData : QueryData {
+        Action<Provider<TQueryData, MemoryRepository<TQueryData>, IQueryable<TQueryData>>.Builder>? config = null) where TQueryData : QueryData {
         var repoFactory = MemoryProviderFactory<TQueryData>.FromDynamicData(source);
 
-        var providerBuilder = new DataProvider<TQueryData, MemoryRepository<TQueryData>>.Builder(providerName, repoFactory);
+        var providerBuilder = new Provider<TQueryData, MemoryRepository<TQueryData>, IQueryable<TQueryData>>.Builder(providerName, repoFactory);
         if(config != null) config(providerBuilder);
         builder.RegisterProvider(providerBuilder.Build(), isDefault);
         

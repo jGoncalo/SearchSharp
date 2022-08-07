@@ -10,13 +10,13 @@ public static class Extensions {
         IDbContextFactory<TContext> contextFactory,
         string name = "entityFramework",
         bool isDefault = false,
-        Action<DataProvider<TQueryData, ContextRepository<TContext, TQueryData>>.Builder>? config = null) 
+        Action<Provider<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>.Builder>? config = null) 
         where TQueryData : QueryData
         where TContext : DbContext {
 
         var repoFactory = new ContextRepositoryFactory<TContext, TQueryData>(contextFactory, (context) => context.Set<TQueryData>());
 
-        var providerBuilder = new DataProvider<TQueryData, ContextRepository<TContext, TQueryData>>.Builder(name, repoFactory);
+        var providerBuilder = new Provider<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>.Builder(name, repoFactory);
         if(config != null) config(providerBuilder);
         builder.RegisterProvider(providerBuilder.Build());
 
@@ -28,13 +28,13 @@ public static class Extensions {
         ContextRepository<TContext, TQueryData>.Selector selector,
         string name = "entityFramework",
         bool isDefault = false,
-        Action<DataProvider<TQueryData, ContextRepository<TContext, TQueryData>>.Builder>? config = null) 
+        Action<Provider<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>.Builder>? config = null) 
         where TQueryData : QueryData
         where TContext : DbContext {
             
         var repoFactory = new ContextRepositoryFactory<TContext, TQueryData>(contextFactory, selector);
 
-        var providerBuilder = new DataProvider<TQueryData, ContextRepository<TContext, TQueryData>>.Builder(name, repoFactory);
+        var providerBuilder = new Provider<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>.Builder(name, repoFactory);
         if(config != null) config(providerBuilder);
         builder.RegisterProvider(providerBuilder.Build());
 
