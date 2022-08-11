@@ -1,11 +1,13 @@
+using SearchSharp.Engine.Parser.Components;
+
 namespace SearchSharp.Engine.Commands;
 
-public class Argument {
-    public string Identifier { get; }
-    public LiteralType Type { get; }
+public class Argument : ArgumentDeclaration {
+    public readonly Literal Literal;
 
-    public Argument(string identifier, LiteralType type) {
-        Identifier = identifier;
-        Type = type;
+    public Argument(string identifier, Literal literal) 
+        : base(identifier, literal.Type)
+    {
+        Literal = literal;
     }
 }

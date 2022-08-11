@@ -1,5 +1,5 @@
+using System.Reflection;
 using SearchSharp.Attributes;
-using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
 
@@ -10,14 +10,17 @@ public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryD
     where TDataStructure : class
     where TCommandSpec : CommandTemplate<TQueryData, TDataStructure>, new() {
     
-    private static LiteralType ToLiteralType(Type type){
+    private static LiteralType ToLiteralType(PropertyInfo propInfo){
+        var type = propInfo.PropertyType;
+
         if(type == typeof(int) || type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return LiteralType.Numeric;
         if(type == typeof(string)) return LiteralType.String;
         if(type == typeof(bool)) return LiteralType.Boolean;
         if(type.IsEnum) return LiteralType.String;
 
-        //TODO: add good exception
-        throw new Exception("TODO");
+        var possibleVals = string.Join(",", Enum.GetValues<LiteralType>());
+        throw new ArgumentResolutionException($"Could not translate {typeof(TCommandSpec).Name}.{propInfo.Name}:{type.Name} " +
+            $"to LiteralType [{possibleVals}]");
     }
 
     private static string GetIdentifier() {
@@ -35,8 +38,8 @@ public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryD
 
         return attribute?.ExecuteAt ?? EffectiveIn.Query;
     }
-    private static Argument[] GetArguments() {
-        var argList = new List<Argument>();
+    private static ArgumentDeclaration[] GetArguments() {
+        var argList = new List<ArgumentDeclaration>();
 
         var propInfos = typeof(TCommandSpec).GetProperties()
             .Select(prop => {
@@ -52,18 +55,20 @@ public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryD
             .ToArray();
 
         foreach(var info in propInfos){
-            if(!(info.Property.GetSetMethod()?.IsPublic ?? false)) throw new SearchExpception("TODO");
+            if(!(info.Property.GetSetMethod()?.IsPublic ?? false))
+                throw new ArgumentResolutionException($"Could not map {typeof(TCommandSpec).Name}.{info.Property.Name}:{info.Property.PropertyType.Name} " +
+                                                        $"with no public setter");
 
-            argList.Add(new Argument(
+            argList.Add(new ArgumentDeclaration(
                 info.Attribute?.Name ?? info.Property.Name,
-                ToLiteralType(info.Property.PropertyType)
+                ToLiteralType(info.Property)
             ));
         }
 
         return argList.ToArray();
     }
     
-    private static void SetProperty(TCommandSpec instance, int argIndex, Runtime.Argument argument){
+    private static void SetProperty(TCommandSpec instance, int argIndex, Argument argument){
         var targetProp = typeof(TCommandSpec).GetProperties()
             .FirstOrDefault(prop => prop.GetCustomAttributes(typeof(ArgumentAttribute), false)
                                         .Cast<ArgumentAttribute>()
@@ -140,7 +145,7 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
     {
         public readonly string Identifier;
         private EffectiveIn _effectiveIn = EffectiveIn.None;
-        private readonly List<Argument> _arguments = new();
+        private readonly List<ArgumentDeclaration> _arguments = new();
         private Func<Parameters<TQueryData, TDataStructure>, TDataStructure> _effect = (arg) => arg.DataSet;
 
         private Builder(string identifier) {
@@ -160,7 +165,7 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
             else if (typeof(TLiteral) == typeof(NumericLiteral)) type = LiteralType.Numeric;
             else throw new SearchExpception($"Unexpected literal type: {typeof(TLiteral).Name} when building rule");
             
-            _arguments.Add(new Argument(identifier, type));
+            _arguments.Add(new ArgumentDeclaration(identifier, type));
             return this;
         }
 
@@ -177,7 +182,7 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
 
         public Command<TQueryData, TDataStructure> Build() {
             var argForm = new HashSet<string>();
-            var argList = new List<Argument>();
+            var argList = new List<ArgumentDeclaration>();
 
             foreach (var arg in _arguments) {
                 if(argForm.Contains(arg.Identifier)) continue;
@@ -193,23 +198,23 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
 
     public string Identifier { get; }
     public EffectiveIn EffectAt { get; }
-    public Argument[] Arguments { get; }
+    public ArgumentDeclaration[] Arguments { get; }
     public Func<Parameters<TQueryData, TDataStructure>, TDataStructure> Effect { get; }
 
-    protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect, params Argument[] arguments) {
+    protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect, params ArgumentDeclaration[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
         Effect = effect;
-        Arguments = arguments ?? Array.Empty<Argument>();
+        Arguments = arguments ?? Array.Empty<ArgumentDeclaration>();
     }
 
-    public Runtime.Argument[] With(params Literal[] literals){
+    public Argument[] With(params Literal[] literals){
         var expectedArgumentCount = Arguments.Length;
         var receivedArgumentCount = literals.Length;
         if(receivedArgumentCount != expectedArgumentCount) 
             throw new ArgumentResolutionException($"Command: {Identifier} expected {expectedArgumentCount} arguments but found {receivedArgumentCount}");
 
-        var runtimeArgs = new List<Runtime.Argument>();
+        var runtimeArgs = new List<Argument>();
         for(var i = 0; i < expectedArgumentCount; i++){
             var lit = literals[i];
             var arg = Arguments[i];
@@ -217,7 +222,7 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
             if(lit.Type != arg.Type) 
                 throw new ArgumentResolutionException($"Command: {Identifier} expected argument[{i}] \"{arg.Identifier}\" to be of type: {arg.Type} but found: {lit.Type}");
 
-            runtimeArgs.Add( new Runtime.Argument(arg.Identifier, lit));
+            runtimeArgs.Add(new Argument(arg.Identifier, lit));
         }
 
         return runtimeArgs.ToArray();

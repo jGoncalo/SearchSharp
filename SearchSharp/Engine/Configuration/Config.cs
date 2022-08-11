@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Rules;
+using SearchSharp.Engine.Evaluation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -12,6 +13,7 @@ public class Config<TQueryData> : IConfig<TQueryData>
 
         private Expression<Func<TQueryData, string, bool>> _stringRule = (data, query) => data.ToString()!.Contains(query);
         private Expression<Func<TQueryData, bool>> _defaultHandler = _ => false;
+        private IEvaluator<TQueryData>? _evaluator = null;
         private ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
 
         public Builder() {
@@ -43,6 +45,11 @@ public class Config<TQueryData> : IConfig<TQueryData>
         }
         #endregion
 
+        public Builder SetEvaluator(IEvaluator<TQueryData> evaluator) {
+            _evaluator = evaluator;
+            return this;
+        }
+
         public Builder AddLogger(ILoggerFactory loggerFactory) {
             _loggerFactory = loggerFactory;
             return this;
@@ -58,7 +65,12 @@ public class Config<TQueryData> : IConfig<TQueryData>
         }
     
         public Config<TQueryData> Build() {
-            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler, _loggerFactory);
+            var evaluator = _evaluator ?? new Evaluator<TQueryData>(
+                _rules,
+                _stringRule,
+                _defaultHandler
+            );
+            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler, evaluator, _loggerFactory);
         }
     }
 
@@ -66,15 +78,18 @@ public class Config<TQueryData> : IConfig<TQueryData>
     public Expression<Func<TQueryData, string, bool>> StringRule { get; }
     public Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
+    public IEvaluator<TQueryData> Evaluator { get; }
     public ILoggerFactory LoggerFactory { get; }
 
     public Config(IReadOnlyDictionary<string, IRule<TQueryData>> rules,
         Expression<Func<TQueryData, string, bool>> stringRule,
         Expression<Func<TQueryData, bool>> defaultHandler,
+        IEvaluator<TQueryData> evaluator,
         ILoggerFactory loggerFactory) {
         Rules = rules;
         StringRule = stringRule;
         DefaultHandler = defaultHandler;
+        Evaluator = evaluator;
         LoggerFactory = loggerFactory;
     }
 }

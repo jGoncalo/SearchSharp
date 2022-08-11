@@ -1,11 +1,11 @@
 using System.Collections;
-using SearchSharp.Engine.Data;
 
-namespace SearchSharp.Engine.Commands.Runtime;
+namespace SearchSharp.Engine.Commands;
 
 public readonly struct Parameters<TQueryData, TDataStructure> : IEnumerable<Argument> 
     where TQueryData : QueryData 
     where TDataStructure : class {
+
     public readonly TDataStructure DataSet;
     public readonly EffectiveIn AffectAt;
     private readonly IReadOnlyDictionary<string, Argument> _arguments;

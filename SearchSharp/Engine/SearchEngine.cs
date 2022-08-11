@@ -77,10 +77,11 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     public String Alias { get; }
 
     private readonly IConfig<TQueryData> _config;
-    private readonly IEvaluator<TQueryData> _evaluator;
     private readonly IReadOnlyDictionary<string, IProvider<TQueryData>> _dataProviders;
     private readonly string _defaultProvider;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
+
+    private IEvaluator<TQueryData> _evaluator => _config.Evaluator;
 
     private SearchEngine(string alias, IConfig<TQueryData> config, 
         IReadOnlyDictionary<string, IProvider<TQueryData>> providers,
@@ -89,7 +90,6 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         DataType = typeof(TQueryData);
         
         _config = config;
-        _evaluator = new Evaluator<TQueryData>(_config);
         _logger = _config.LoggerFactory.CreateLogger<SearchEngine<TQueryData>>();
         _dataProviders = providers;
         _defaultProvider = defaultProvider;

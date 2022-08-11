@@ -1,4 +1,3 @@
-using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Commands;
@@ -6,9 +5,9 @@ namespace SearchSharp.Engine.Commands;
 public interface ICommand<TQueryData> where TQueryData : QueryData {
     string Identifier { get; }
     EffectiveIn EffectAt { get; }
-    Argument[] Arguments { get; }
+    ArgumentDeclaration[] Arguments { get; }
 
-    Runtime.Argument[] With(params Literal[] literals);
+    Argument[] With(params Literal[] literals);
 }
 
 public interface ICommand<TQueryData, TDataStructure> : ICommand<TQueryData>

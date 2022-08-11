@@ -8,14 +8,16 @@ using SearchSharp.Engine.Parser.Components;
 namespace SearchSharp.Engine.Evaluation;
 
 public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : QueryData {
-    private readonly IConfig<TQueryData> _config;
+    private IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
+    private Expression<Func<TQueryData, string, bool>> StringRule { get; }
+    private Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
-    private IReadOnlyDictionary<string, IRule<TQueryData>> Rules => _config.Rules;
-    private Expression<Func<TQueryData, string, bool>> StringRule => _config.StringRule;
-    private Expression<Func<TQueryData, bool>> DefaultHandler => _config.DefaultHandler;
-
-    public Evaluator(IConfig<TQueryData> config) {
-        _config = config;
+    public Evaluator(IReadOnlyDictionary<string, IRule<TQueryData>> rules, 
+        Expression<Func<TQueryData, string, bool>> stringRule,
+        Expression<Func<TQueryData, bool>> defaultRule) {
+        Rules = rules;
+        StringRule = stringRule;
+        DefaultHandler = defaultRule;
     }
 
     #region Evaluation
@@ -47,7 +49,7 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     }
     private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, StringLiteral[], bool>> listRule,
         Arguments arguments){
-        if(arguments.IsStringList is false) throw new ArgumentResolutionException("TODO");
+        if(arguments.IsStringList is false) throw new ArgumentResolutionException("String list composition requires all literals to be StringLiteral");
         var stringArguments = arguments.Literals.Cast<StringLiteral>().ToArray();
 
         var visited = new ReplaceListVisitor<TQueryData, StringLiteral>(stringArguments).Replace(listRule);
@@ -55,7 +57,7 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     }
     private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, NumericLiteral[], bool>> listRule,
         Arguments arguments){
-        if(arguments.IsNumericList is false) throw new ArgumentResolutionException("TODO");
+        if(arguments.IsNumericList is false) throw new ArgumentResolutionException("String list composition requires all literals to be NumericLiteral");
         var stringArguments = arguments.Literals.Cast<NumericLiteral>().ToArray();
 
         var visited = new ReplaceListVisitor<TQueryData, NumericLiteral>(stringArguments).Replace(listRule);
@@ -63,7 +65,7 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     }
     private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, BooleanLiteral[], bool>> listRule,
         Arguments arguments){
-        if(arguments.IsBooleanList is false) throw new ArgumentResolutionException("TODO");
+        if(arguments.IsBooleanList is false) throw new ArgumentResolutionException("String list composition requires all literals to be BooleanLiteral");
         var stringArguments = arguments.Literals.Cast<BooleanLiteral>().ToArray();
 
         var visited = new ReplaceListVisitor<TQueryData, BooleanLiteral>(stringArguments).Replace(listRule);
