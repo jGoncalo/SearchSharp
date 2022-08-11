@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using SearchSharp.Engine.Parser.Components;
 
-namespace SearchSharp.Engine.Evaluators.Visitor;
+namespace SearchSharp.Engine.Evaluation.Visitor;
 
 internal class ReplaceListVisitor<TQueryData, TLiteral> : ExpressionVisitor 
     where TQueryData : QueryData

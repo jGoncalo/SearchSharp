@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Parser.Components;
 
-namespace SearchSharp.Engine.Evaluators.Visitor;
+namespace SearchSharp.Engine.Evaluation.Visitor;
 
 internal class ReplaceRangeVisitor<TQueryData> : ExpressionVisitor 
     where TQueryData : QueryData {

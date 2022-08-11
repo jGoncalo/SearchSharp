@@ -1,3 +1,4 @@
+using SearchSharp.Result;
 using SearchSharp.Engine;
 using SearchSharp.Engine.Parser.Components;
 

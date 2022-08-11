@@ -1,12 +1,11 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Rules;
-using SearchSharp.Engine.Commands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace SearchSharp.Engine.Config;
+namespace SearchSharp.Engine.Configuration;
 
-public class Config<TQueryData> : ISearchEngine<TQueryData>.IConfig 
+public class Config<TQueryData> : IConfig<TQueryData>
     where TQueryData : QueryData {
     public class Builder {
         private readonly Dictionary<string, IRule<TQueryData>> _rules = new();

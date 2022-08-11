@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using SearchSharp.Domain;
+using SearchSharp.Result;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Engine.Commands.Runtime;
 using SearchSharp.Exceptions;

@@ -2,6 +2,7 @@ using SearchSharp.Engine;
 using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Exceptions;
+using SearchSharp.Result;
 using Sprache;
 
 namespace SearchSharp.Domain;

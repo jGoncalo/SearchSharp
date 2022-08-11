@@ -1,17 +1,17 @@
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Engine.Parser.Components.Expressions;
+using SearchSharp.Result;
 
 namespace SearchSharp.Engine;
 
 using SearchSharp.Exceptions;
-using SearchSharp.Engine.Config;
+using SearchSharp.Engine.Configuration;
 using SearchSharp.Engine.Data;
 using SearchSharp.Engine.Parser;
-using SearchSharp.Engine.Evaluators;
+using SearchSharp.Engine.Evaluation;
+using SearchSharp.Engine.Evaluation.Visitor;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using SearchSharp.Engine.Evaluators.Visitor;
-using SearchSharp.Domain;
 using Sprache;
 using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;
@@ -21,7 +21,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : QueryData {
     public class Builder {
         private readonly string _alias;
-        private ISearchEngine<TQueryData>.IConfig _config;
+        private IConfig<TQueryData> _config;
         private Dictionary<string, IProvider<TQueryData>> _dataProviders = new Dictionary<string, IProvider<TQueryData>>();
         private string _defaultProvider = string.Empty;
 
@@ -31,7 +31,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         }
 
         #region Configuration
-        public Builder With(ISearchEngine<TQueryData>.IConfig config) {
+        public Builder With(IConfig<TQueryData> config) {
             _config = config;
             return this;
         }
@@ -76,13 +76,13 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     public Type DataType { get; }
     public String Alias { get; }
 
-    private readonly ISearchEngine<TQueryData>.IConfig _config;
-    private readonly ISearchEngine<TQueryData>.IEvaluator _evaluator;
+    private readonly IConfig<TQueryData> _config;
+    private readonly IEvaluator<TQueryData> _evaluator;
     private readonly IReadOnlyDictionary<string, IProvider<TQueryData>> _dataProviders;
     private readonly string _defaultProvider;
     private readonly ILogger<SearchEngine<TQueryData>> _logger;
 
-    private SearchEngine(string alias, ISearchEngine<TQueryData>.IConfig config, 
+    private SearchEngine(string alias, IConfig<TQueryData> config, 
         IReadOnlyDictionary<string, IProvider<TQueryData>> providers,
         string defaultProvider){
         Alias = alias;

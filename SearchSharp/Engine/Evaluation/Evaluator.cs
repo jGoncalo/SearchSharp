@@ -1,19 +1,20 @@
 using SearchSharp.Engine.Rules;
+using SearchSharp.Engine.Configuration;
 using SearchSharp.Exceptions;
 using System.Linq.Expressions;
-using SearchSharp.Engine.Evaluators.Visitor;
+using SearchSharp.Engine.Evaluation.Visitor;
 using SearchSharp.Engine.Parser.Components;
 
-namespace SearchSharp.Engine.Evaluators;
+namespace SearchSharp.Engine.Evaluation;
 
-public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where TQueryData : QueryData {
-    private readonly ISearchEngine<TQueryData>.IConfig _config;
+public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : QueryData {
+    private readonly IConfig<TQueryData> _config;
 
     private IReadOnlyDictionary<string, IRule<TQueryData>> Rules => _config.Rules;
     private Expression<Func<TQueryData, string, bool>> StringRule => _config.StringRule;
     private Expression<Func<TQueryData, bool>> DefaultHandler => _config.DefaultHandler;
 
-    public Evaluator(ISearchEngine<TQueryData>.IConfig config) {
+    public Evaluator(IConfig<TQueryData> config) {
         _config = config;
     }
 

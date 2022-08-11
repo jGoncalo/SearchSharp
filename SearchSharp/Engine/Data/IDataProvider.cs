@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
-using SearchSharp.Domain;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Result;
 
 namespace SearchSharp.Engine.Data;
 

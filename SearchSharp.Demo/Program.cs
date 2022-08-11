@@ -4,6 +4,7 @@ using SearchSharp.Engine.Commands;
 using SearchSharp.Memory;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Demo.Commands;
+using SearchSharp.Result;
 
 using Microsoft.Extensions.Logging;
 using Serilog;

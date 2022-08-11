@@ -1,4 +1,4 @@
-namespace SearchSharp.Engine;
+namespace SearchSharp;
 
 public abstract class QueryData {
     
