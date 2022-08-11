@@ -12,5 +12,7 @@ public static class Extensions {
     
     public static StringLiteral AsLiteral(this string value) => new StringLiteral(value);
     public static StringLiteral AsLiteral<TEnum>(this TEnum value) where TEnum : Enum => new StringLiteral(value.ToString());
+
+    public static BooleanLiteral AsLiteral(this bool value) => new BooleanLiteral(value);
     #endregion
 }
