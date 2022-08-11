@@ -3,6 +3,10 @@ namespace SearchSharp.Engine.Parser.Components;
 public class Arguments : QueryItem {
     public readonly Literal[] Literals;
 
+    public bool IsStringList => Literals.All(lit => lit.Type == LiteralType.String);
+    public bool IsNumericList => Literals.All(lit => lit.Type == LiteralType.Numeric);
+    public bool IsBooleanList => Literals.All(lit => lit.Type == LiteralType.Boolean);
+
     public Arguments(params Literal[] literals){
         Literals = literals;
     }

@@ -1,4 +1,5 @@
 using SearchSharp.Engine.Rules;
+using SearchSharp.Exceptions;
 using System.Linq.Expressions;
 using SearchSharp.Engine.Evaluators.Visitor;
 using SearchSharp.Engine.Parser.Components;
@@ -41,6 +42,30 @@ public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where 
     private static Expression<Func<TQueryData, bool>> ComposeRange(Expression<Func<TQueryData, NumericLiteral, NumericLiteral, bool>> rangeRule,
         NumericLiteral lower, NumericLiteral upper){
         var visited = new ReplaceRangeVisitor<TQueryData>(lower, upper).Replace(rangeRule);
+        return visited;
+    }
+    private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, StringLiteral[], bool>> listRule,
+        Arguments arguments){
+        if(arguments.IsStringList is false) throw new ArgumentResolutionException("TODO");
+        var stringArguments = arguments.Literals.Cast<StringLiteral>().ToArray();
+
+        var visited = new ReplaceListVisitor<TQueryData, StringLiteral>(stringArguments).Replace(listRule);
+        return visited;
+    }
+    private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, NumericLiteral[], bool>> listRule,
+        Arguments arguments){
+        if(arguments.IsNumericList is false) throw new ArgumentResolutionException("TODO");
+        var stringArguments = arguments.Literals.Cast<NumericLiteral>().ToArray();
+
+        var visited = new ReplaceListVisitor<TQueryData, NumericLiteral>(stringArguments).Replace(listRule);
+        return visited;
+    }
+    private static Expression<Func<TQueryData, bool>> ComposeList(Expression<Func<TQueryData, BooleanLiteral[], bool>> listRule,
+        Arguments arguments){
+        if(arguments.IsBooleanList is false) throw new ArgumentResolutionException("TODO");
+        var stringArguments = arguments.Literals.Cast<BooleanLiteral>().ToArray();
+
+        var visited = new ReplaceListVisitor<TQueryData, BooleanLiteral>(stringArguments).Replace(listRule);
         return visited;
     }
     private static Expression<Func<TQueryData, bool>> ComposeText(Expression<Func<TQueryData, string, bool>> rule,
@@ -95,6 +120,24 @@ public class Evaluator<TQueryData> : ISearchEngine<TQueryData>.IEvaluator where 
         if(rangeRule == null) return DefaultHandler;
 
         return ComposeRange(rangeRule, directive.OperatorSpec.LowerBound, directive.OperatorSpec.UpperBound);
+    }
+    public Expression<Func<TQueryData, bool>> Evaluate(ListDirective directive) {
+        var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
+        if(!hasRule) return DefaultHandler;
+
+        var strListRule = rule!.StringListRule;
+        if(strListRule is not null) 
+            return ComposeList(strListRule, directive.Arguments);
+        
+        var numListRule = rule!.NumericListRule;
+        if(numListRule is not null)
+            return ComposeList(numListRule, directive.Arguments);
+
+        var boolListRule = rule!.BooleanListRule;
+        if(boolListRule is not null)
+            return ComposeList(boolListRule, directive.Arguments);
+
+        return DefaultHandler;
     }
     public Expression<Func<TQueryData, bool>> Evaluate(string textQuery) {
         return ComposeText(StringRule, textQuery);

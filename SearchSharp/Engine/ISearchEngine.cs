@@ -20,6 +20,7 @@ public interface ISearchEngine<TQueryData> : ISearchEngine where TQueryData : Qu
         Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive);
+        Expression<Func<TQueryData, bool>> Evaluate(ListDirective directive);
         Expression<Func<TQueryData, bool>> Evaluate(string textQuery);
     }
     public interface IConfig {

@@ -82,6 +82,11 @@ public static class QueryParser {
             from upper in Numeric.Named("diretive-range-upper")
             from mark in Parse.Char(']').Once().Named("diretive-range-end")
             select new RangeDirective.Operator(NumericLiteral.Min, upper));
+
+    public static Parser<Arguments> ListDirectiveOperator => from leading in Parse.Char('[').Once().Named("directive-list-start")
+        from arguments in Arguments.Token().Named("directive-list-arguments")
+        from trailing in Parse.Char(']').Once().Named("directive-list-end")
+        select arguments;
     #endregion
     
     public static Parser<Directive> Directive => 
@@ -94,6 +99,9 @@ public static class QueryParser {
         .Or(from id in Identifier.Named("directive-identifier")
             from op in RangeDirectiveOperator.Named("directive-num-operator")
             select new RangeDirective(op, id) as Directive)
+        .Or(from id in Identifier.Named("directive-identifier")
+            from op in ListDirectiveOperator.Named("directive-list-operator")
+            select new ListDirective(op, id) as Directive)
         .Or(from id in Identifier.Named("directive-identifier")
             from op in NumericDirectiveOperator.Named("directive-range-operator")
             select new NumericDirective(op, id) as Directive);

@@ -27,9 +27,11 @@
 <dirRangeOp> ::= "[" <num> ".." <num> "]"
 	| "[" <num> "..]"
     | "[.." <num> "]"
+<dirListOp> ::= "[" <args> "]";
 <dir> ::= <id> <dirOp> (<str> | <num> | <bool>)
     | <id> <dirNumbOp>
     | <id> <dirRangeOp>
+    | <id> <dirListOp>
 
 <logicExpr> ::= "(" <logicExpr> ")"
 	| "!" <logicExpr>

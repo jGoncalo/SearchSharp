@@ -201,6 +201,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             ComparisonDirective spec => _evaluator.Evaluate(spec),
             NumericDirective num => _evaluator.Evaluate(num),
             RangeDirective range => _evaluator.Evaluate(range),
+            ListDirective list => _evaluator.Evaluate(list),
             
             _ => throw new Exception($"Unexpected directive type: {exp.Directive.GetType().Name}")
         };

@@ -24,7 +24,8 @@ public enum ExpType {
 public enum DirectiveType {
     Comparison = 0,
     Numeric = 1,
-    Range = 2
+    Range = 2,
+    List = 3
 }
 public enum DirectiveComparisonOperator {
     Rule = 0,               //:
