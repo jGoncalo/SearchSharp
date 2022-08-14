@@ -88,7 +88,6 @@ internal class Program
 
         var searchDomain = new SearchDomain.Builder()
             .With<Data>("user", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
-                .SetDefaultHandler(_ => false)
                 .SetStringRule((d, text) => d.Description.Contains(text))
                     
                 //Rules
@@ -135,7 +134,6 @@ internal class Program
                     provBuilder.WithCommand(takeCommand);
                 }))
             .With<Game>("games", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
-                .SetDefaultHandler(_ => false)
                 .SetStringRule((data, str) => data.Name.Contains(str))
                 
                 //Rules

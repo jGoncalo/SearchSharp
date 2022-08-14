@@ -13,6 +13,24 @@ public abstract class Directive : QueryItem {
     }
 
     public DirectiveExpression AsExpression() => new DirectiveExpression(this);
+
+    public override bool Equals(object? obj)
+    {
+        if(obj is not Directive dir) return false;
+        if(dir.Identifier != this.Identifier) return false;
+        if(dir.Type != this.Type) return false;
+
+        return this.Type switch {
+            DirectiveType.Comparison => (dir as ComparisonDirective)!.Equals(this as ComparisonDirective),
+            DirectiveType.Numeric => (dir as NumericDirective)!.Equals(this as NumericDirective),
+            DirectiveType.Range => (dir as RangeDirective)!.Equals(this as RangeDirective),
+            DirectiveType.List => (dir as ListDirective)!.Equals(this as ListDirective),
+
+            _ => false
+        };
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Identifier, Type);
 }
 
 public class ComparisonDirective : Directive {
@@ -36,6 +54,16 @@ public class ComparisonDirective : Directive {
 
         return Identifier + opStr + Value.ToString();
     }
+
+    public override bool Equals(object? obj)
+    {
+        if(obj is not ComparisonDirective dir) return false;
+        
+        return dir.OperatorType == OperatorType
+            && dir.Value == Value;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Identifier, Type, OperatorType, Value);
 }
 
 public class NumericDirective : Directive {
@@ -67,6 +95,15 @@ public class NumericDirective : Directive {
 
         return Identifier + opStr + OperatorSpec.ToString();
     }
+
+    public override bool Equals(object? obj)
+    {
+        if(obj is not NumericDirective dir) return false;
+        
+        return dir.OperatorSpec != OperatorSpec;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Identifier, Type, OperatorSpec);
 }
 
 public class RangeDirective : Directive {
@@ -87,6 +124,15 @@ public class RangeDirective : Directive {
     public override string ToString() {
         return Identifier + $"[{OperatorSpec.LowerBound}..{OperatorSpec.UpperBound}]";
     }
+
+    public override bool Equals(object? obj)
+    {
+        if(obj is not RangeDirective dir) return false;
+        
+        return dir.OperatorSpec != OperatorSpec;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Identifier, Type, OperatorSpec);
 }
 
 public class ListDirective : Directive {
@@ -112,4 +158,12 @@ public class ListDirective : Directive {
     {
         return Identifier + $"[{Arguments.ToString()}]";
     }
+
+    public override bool Equals(object? obj)
+    {
+        if(obj is not ListDirective dir) return false;
+        
+        return dir.Arguments == Arguments;
+    }
+    public override int GetHashCode() => HashCode.Combine(Identifier, Type, Arguments);
 }

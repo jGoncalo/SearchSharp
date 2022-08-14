@@ -190,8 +190,18 @@ public static class QueryParser {
             select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from provider in ProviderInfo.Token() from query in Query select new Query(query.Root, provider, query.Commands)) 
-        .Or(from commandExpr in CommandExpression.Token() from query in Query select new Query(query.Root, query.Provider, commandExpr.Commands))
-        .Or(from expr in LogicExpression select new Query(expr, null))
+    public static Parser<Query> Query => (from expr in LogicExpression select new Query(expr, null))
         .Or(from str in StringExpression select new Query(str, null));
+
+    public static Parser<Query> Search => (from provider in ProviderInfo.Token() 
+        from commandExpr in CommandExpression.Token() 
+        from query in Query 
+        select new Query(query.Root, provider, commandExpr.Commands))
+        .Or(from provider in ProviderInfo.Token()
+            from query in Query
+            select new Query(query.Root, provider, query.Commands))
+        .Or(from commandExpr in CommandExpression
+            from query in Query
+            select new Query(query.Root, query.Provider, commandExpr.Commands))
+        .Or(from query in Query select query);
 }

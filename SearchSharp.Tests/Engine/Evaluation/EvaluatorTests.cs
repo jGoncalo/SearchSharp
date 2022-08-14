@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using SearchSharp.Exceptions;
 using SearchSharp.Engine.Evaluation;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Engine.Rules;
@@ -249,36 +250,37 @@ public class EvaluatorTests {
     [Fact]
     public void Evaluate_Numeric_UnknownRule(){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
-        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => true, defaultExpression);
+        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => true);
+        var directive = new NumericDirective(new NumericDirective.Operator(DirectiveNumericOperator.GreaterOrEqual, 10.AsLiteral()), "unknown");
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new NumericDirective(new NumericDirective.Operator(DirectiveNumericOperator.GreaterOrEqual, 10.AsLiteral()), "unknown"));
+        var thrown = Assert.Throws<UnknownRuleException>(() => evaluator.Evaluate(directive));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("unknown", thrown.Identifier);
         #endregion
     }
     [Theory]
     [ClassData(typeof(EnumClassData<DirectiveNumericOperator>))]
     public void Evaluate_Numeric_UnknownOperator(DirectiveNumericOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, NumericLiteral, bool>>? outExpr = (d,num) => false;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.NumericRules.TryGetValue(operatorType, out outExpr) == false);
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>{
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
+        var directive = new NumericDirective(new NumericDirective.Operator(operatorType, 10.AsLiteral()), "known");
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new NumericDirective(new NumericDirective.Operator(operatorType, 10.AsLiteral()), "known"));
+        var thrown = Assert.Throws<UnknownRuleDirectiveException>( () => evaluator.Evaluate(directive));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("known", thrown.Identifier);
+        Assert.Equal(directive, thrown.Directive);
         #endregion
     }
     [Theory]
@@ -291,7 +293,7 @@ public class EvaluatorTests {
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.NumericRules.TryGetValue(operatorType, out outExpr) == true);
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>{
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act

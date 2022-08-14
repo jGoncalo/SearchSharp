@@ -10,14 +10,11 @@ namespace SearchSharp.Engine.Evaluation;
 public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : QueryData {
     private IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
     private Expression<Func<TQueryData, string, bool>> StringRule { get; }
-    private Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
     public Evaluator(IReadOnlyDictionary<string, IRule<TQueryData>> rules, 
-        Expression<Func<TQueryData, string, bool>> stringRule,
-        Expression<Func<TQueryData, bool>> defaultRule) {
+        Expression<Func<TQueryData, string, bool>> stringRule) {
         Rules = rules;
         StringRule = stringRule;
-        DefaultHandler = defaultRule;
     }
 
     #region Evaluation
@@ -81,26 +78,25 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     public Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
         
-        if(!hasRule) return DefaultHandler;
+        if(!hasRule) throw new UnknownRuleException(directive.Identifier);
 
         Expression<Func<TQueryData, bool>> lambda;
 
         switch(directive.Value) {
             case StringLiteral strLit:
                 lambda = rule!.ComparisonStrRules.TryGetValue(directive.OperatorType, out var exactStrRule) ?
-                    ComposeComparison(exactStrRule, strLit) : DefaultHandler;
+                    ComposeComparison(exactStrRule, strLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             case NumericLiteral numLit:
                 lambda = rule!.ComparisonNumRules.TryGetValue(directive.OperatorType, out var exactNumRule) ?
-                    ComposeComparison(exactNumRule, numLit) : DefaultHandler;
+                    ComposeComparison(exactNumRule, numLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             case BooleanLiteral boolLit:
                 lambda = rule!.ComparisonBoolRules.TryGetValue(directive.OperatorType, out var exactBoolRule) ?
-                    ComposeComparison(exactBoolRule, boolLit) : DefaultHandler;
+                    ComposeComparison(exactBoolRule, boolLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             default:
-                lambda = DefaultHandler;
-                break;
+                throw new UnknownRuleDirectiveException(directive);
         }
 
         return lambda;
@@ -108,25 +104,25 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     public Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive) {
 
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
-        if(!hasRule) return DefaultHandler;
+        if(!hasRule) throw new UnknownRuleException(directive.Identifier);
 
         var hasOpRule = rule!.NumericRules.TryGetValue(directive.OperatorSpec.OperatorType, out var opRule);
-        if(!hasOpRule) return DefaultHandler;
+        if(!hasOpRule) throw new UnknownRuleDirectiveException(directive);
 
         return ComposeNumeric(opRule!, directive.OperatorSpec.Value);
     }
     public Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
-        if(!hasRule) return DefaultHandler;
+        if(!hasRule) throw new UnknownRuleException(directive.Identifier);
 
         var rangeRule = rule!.RangeRule;
-        if(rangeRule == null) return DefaultHandler;
+        if(rangeRule == null) throw new UnknownRuleDirectiveException(directive);
 
         return ComposeRange(rangeRule, directive.OperatorSpec.LowerBound, directive.OperatorSpec.UpperBound);
     }
     public Expression<Func<TQueryData, bool>> Evaluate(ListDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
-        if(!hasRule) return DefaultHandler;
+        if(!hasRule) throw new UnknownRuleException(directive.Identifier);
 
         var strListRule = rule!.StringListRule;
         if(strListRule is not null) 
@@ -140,7 +136,7 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
         if(boolListRule is not null)
             return ComposeList(boolListRule, directive.Arguments);
 
-        return DefaultHandler;
+        throw new UnknownRuleDirectiveException(directive);
     }
     public Expression<Func<TQueryData, bool>> Evaluate(string textQuery) {
         return ComposeText(StringRule, textQuery);

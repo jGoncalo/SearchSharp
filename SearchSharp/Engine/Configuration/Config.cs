@@ -12,7 +12,6 @@ public class Config<TQueryData> : IConfig<TQueryData>
         private readonly Dictionary<string, IRule<TQueryData>> _rules = new();
 
         private Expression<Func<TQueryData, string, bool>> _stringRule = (data, query) => data.ToString()!.Contains(query);
-        private Expression<Func<TQueryData, bool>> _defaultHandler = _ => false;
         private IEvaluator<TQueryData>? _evaluator = null;
         private ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
 
@@ -55,40 +54,27 @@ public class Config<TQueryData> : IConfig<TQueryData>
             return this;
         }
 
-        public Builder SetDefaultHandler(Expression<Func<TQueryData, bool>> rule){
-            _defaultHandler = rule;
-            return this;
-        }
-        public Builder ResetDefaultHanlder() {
-            _defaultHandler = _ => false;
-            return this;
-        }
-    
         public Config<TQueryData> Build() {
             var evaluator = _evaluator ?? new Evaluator<TQueryData>(
                 _rules,
-                _stringRule,
-                _defaultHandler
+                _stringRule
             );
-            return new Config<TQueryData>(_rules, _stringRule, _defaultHandler, evaluator, _loggerFactory);
+            return new Config<TQueryData>(_rules, _stringRule, evaluator, _loggerFactory);
         }
     }
 
     public IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
     public Expression<Func<TQueryData, string, bool>> StringRule { get; }
-    public Expression<Func<TQueryData, bool>> DefaultHandler { get; }
 
     public IEvaluator<TQueryData> Evaluator { get; }
     public ILoggerFactory LoggerFactory { get; }
 
     public Config(IReadOnlyDictionary<string, IRule<TQueryData>> rules,
         Expression<Func<TQueryData, string, bool>> stringRule,
-        Expression<Func<TQueryData, bool>> defaultHandler,
         IEvaluator<TQueryData> evaluator,
         ILoggerFactory loggerFactory) {
         Rules = rules;
         StringRule = stringRule;
-        DefaultHandler = defaultHandler;
         Evaluator = evaluator;
         LoggerFactory = loggerFactory;
     }
