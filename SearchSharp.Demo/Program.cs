@@ -88,7 +88,7 @@ internal class Program
             }).Build();
 
         var searchDomain = new SearchDomain.Builder()
-            .With<Data>("user", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
+            .With<Data>("users", engineBuilder => engineBuilder.With(config => config.AddLogger(logFactory)
                 .SetStringRule((d, text) => d.Description.Contains(text))
                     
                 //Rules
@@ -122,7 +122,7 @@ internal class Program
                     new Data { Id = 17, Email = "sec@safety.com", Description = "Trusts no one", HasAuth = true},
                     new Data { Id = 18, Email = "zoe@mnstrs.com", Description = "Wraith like teeth", ProviderType = Data.Provider.External},
                     new Data { Id = 22, Email = "liv@safety.com", Description = "PowerOn people!", ProviderType = Data.Provider.External}
-                }, "users", config: provBuilder => {
+                }, "default", config: provBuilder => {
                     provBuilder.WithCommand(skipCommand);
                     provBuilder.WithCommand(takeCommand);
                 })

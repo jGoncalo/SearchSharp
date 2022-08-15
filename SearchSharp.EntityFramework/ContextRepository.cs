@@ -6,25 +6,6 @@ using System.Linq.Expressions;
 
 namespace SearchSharp.EntityFramework;
 
-public class ContextRepositoryFactory<TContext, TQueryData> : IRepositoryFactory<TQueryData, ContextRepository<TContext, TQueryData>, IQueryable<TQueryData>>
-     where TQueryData : QueryData
-     where TContext : DbContext
-{
-    private readonly IDbContextFactory<TContext> _contextFactory;
-    private readonly ContextRepository<TContext, TQueryData>.Selector _selector;
-
-    public ContextRepositoryFactory(IDbContextFactory<TContext> contextFactory, 
-        ContextRepository<TContext, TQueryData>.Selector selector) {
-        _contextFactory = contextFactory;
-        _selector = selector;
-    }
-
-    public ContextRepository<TContext, TQueryData> Instance()
-    {
-        return new ContextRepository<TContext, TQueryData>(_contextFactory.CreateDbContext(), _selector);
-    }
-}
-
 public class ContextRepository<TContext, TQueryData> : IRepository<TQueryData, IQueryable<TQueryData>>
     where TQueryData : QueryData
     where TContext : DbContext
@@ -42,13 +23,23 @@ public class ContextRepository<TContext, TQueryData> : IRepository<TQueryData, I
     public void Modify(Func<IQueryable<TQueryData>, IQueryable<TQueryData>> modifer) {
         DataSet = modifer(DataSet);
     }
+    public Task ModifyAsync(Func<IQueryable<TQueryData>, IQueryable<TQueryData>> modifer, CancellationToken ct = default){
+        Modify(modifer);
+        return Task.CompletedTask;
+    }
 
     public void Apply(Expression<Func<TQueryData, bool>> condition)
     {
         DataSet = DataSet.Where(condition);
     }
+    public Task ApplyAsync(Expression<Func<TQueryData, bool>> condition, CancellationToken ct = default) {
+        Apply(condition);
+        return Task.CompletedTask;
+    }
 
     public int Count() => DataSet.Count();
+    public Task<int> CountAsync(CancellationToken ct = default) => DataSet.CountAsync(ct);
 
     public TQueryData[] Fetch() => DataSet.ToArray();
+    public Task<TQueryData[]> FetchAsync(CancellationToken ct = default) => Task.FromResult(Fetch());
 }

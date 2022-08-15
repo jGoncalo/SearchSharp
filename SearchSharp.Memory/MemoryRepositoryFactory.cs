@@ -1,5 +1,3 @@
-﻿using System.Linq.Expressions;
-using SearchSharp.Engine;
 using SearchSharp.Engine.Data;
 
 namespace SearchSharp.Memory;
@@ -21,24 +19,4 @@ public class MemoryProviderFactory<TQueryData> : IRepositoryFactory<TQueryData, 
     public MemoryRepository<TQueryData> Instance(){
         return new MemoryRepository<TQueryData>(_getData().AsQueryable());
     }
-}
-
-public class MemoryRepository<TQueryData> : IRepository<TQueryData, IQueryable<TQueryData>>
-    where TQueryData : QueryData {
-
-    public IQueryable<TQueryData> DataSet { get; private set;}
-
-    internal MemoryRepository(IQueryable<TQueryData> data) {
-        DataSet = data;
-    }
-
-    public void Modify(Func<IQueryable<TQueryData>, IQueryable<TQueryData>> modifer) {
-        DataSet = modifer(DataSet);
-    }
-    public void Apply(Expression<Func<TQueryData, bool>> condition)
-    {
-        DataSet = DataSet.Where(condition);
-    }
-    public int Count() => DataSet.Count();
-    public TQueryData[] Fetch() => DataSet.ToArray();
 }

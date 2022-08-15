@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Engine.Parser.Components;
-using SearchSharp.Result;
 
 namespace SearchSharp.Engine.Data;
 
@@ -10,5 +9,6 @@ public interface IProvider<TQueryData>
     string Name { get; }
 
     IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
-    ISearchResult<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression = null);
+    Result<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression);
+    Task<Result<TQueryData>> GetAsync(Command[] commands, Expression<Func<TQueryData, bool>>? expression, CancellationToken ct = default);
 }

@@ -91,16 +91,31 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         return affectedSet;
     }
 
-    public ISearchResult<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression = null){
+    public Result<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression){
+        var task = GetAsync(commands, expression);
+        Task.WhenAll(task);
+        return task.Result;
+    }
+
+    public async Task<Result<TQueryData>> GetAsync(Command[] commands, Expression<Func<TQueryData, bool>>? expression,
+        CancellationToken ct = default){
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
+
         var repo = (TDataRepository) _repositoryFactory.Instance();
+        var count = await repo.CountAsync(ct);
+
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
         
-        repo.Modify(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Provider));
-        if(expression != null) repo.Apply(expression);
-        repo.Modify(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Query));
+        await repo.ModifyAsync(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Provider), ct);
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
+        if(expression != null) await repo.ApplyAsync(expression, ct);
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
+        await repo.ModifyAsync(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Query), ct);
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
+
+        var content = await repo.FetchAsync(ct);
+        if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
         
-        return new SearchResult<TQueryData>{
-            Total = repo.Count(),
-            Content = repo.Fetch()
-        };
+        return new Result<TQueryData>(count, await repo.FetchAsync(ct));
     }
 }

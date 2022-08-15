@@ -63,58 +63,58 @@ public class SearchDomain : ISearchDomain
     }
 
     public ISearchResult Search(string query, string? engineAlias = null, string? dataProvider = null) {
+        var task = SearchAsync(query, engineAlias, dataProvider);
+        Task.WhenAll(task);
+        return task.Result;
+    }
+    public ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null) {
+        var task = SearchAsync(query, engineAlias, dataProvider);
+        Task.WhenAll(task);
+        return task.Result;
+    }
+    public Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) {
         var parseResult = QueryParser.Query.TryParse(query);
         if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
         var parsedQuery = parseResult.Value;
 
-        return Search(parsedQuery, engineAlias, dataProvider);
+        return SearchAsync(parsedQuery, engineAlias, dataProvider, ct);
     }
-    public ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null) {
+    public async Task<ISearchResult> SearchAsync(Query query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) {
         var targetAlias = engineAlias ?? query.Provider?.EngineAlias ?? _defaultEngineAlias;
         var hasEngine = TryGet(targetAlias, out var engine);
         
-        if(!hasEngine) throw new SearchExpception("");
+        if(!hasEngine) throw new SearchExpception("TODO");
 
-        var result = engine!.Query(query, dataProvider);
-        return new SearchResult {
-            Input = result.Input,
-            Total = result.Total,
-            Content = result.Content
-        };
-    }
-    public Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null) {
-        return Task.FromResult(Search(query, engineAlias, dataProvider));
-    }
-    public Task<ISearchResult> SearchAsync(Query query, string? engineAlias = null, string? dataProvider = null) {
-        return Task.FromResult(Search(query, engineAlias, dataProvider));
+        return await engine!.QueryAsync(query, dataProvider, ct);
     }
 
     public ISearchResult<TQueryData> Search<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
-        var parseResult = QueryParser.Query.TryParse(query);
-        if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
-
-        var parsed = QueryParser.Query.TryParse(query);
-        if(!parsed.WasSuccessful) throw new SearchExpception("");
-        var parsedQuery = parsed.Value;
-
-        return Search<TQueryData>(parsedQuery, engineAlias, dataProvider);
+        var task = SearchAsync<TQueryData>(query, engineAlias, dataProvider);
+        Task.WaitAll(task);
+        return task.Result;
     }
     public ISearchResult<TQueryData> Search<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
+    {
+        var task = SearchAsync<TQueryData>(query, engineAlias, dataProvider);
+        Task.WaitAll(task);
+        return task.Result;
+    }
+    public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) where TQueryData : QueryData
+    {
+        var parseResult = QueryParser.Query.TryParse(query);
+        if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
+        var parsedQuery = parseResult.Value;
+
+        return SearchAsync<TQueryData>(parsedQuery, engineAlias, dataProvider, ct);
+    }
+    public async Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) where TQueryData : QueryData
     {
         var targetAlias = engineAlias ?? query.Provider?.EngineAlias ?? _defaultEngineAlias;
         var hasEngine = TryGet<TQueryData>(targetAlias, out var engine);
         
-        if(!hasEngine) throw new SearchExpception("");
+        if(!hasEngine) throw new SearchExpception("TODO");
 
-        return engine!.Query(query, dataProvider);
-    }
-    public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
-    {
-        return Task.FromResult(Search<TQueryData>(query, engineAlias, dataProvider));
-    }
-    public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
-    {
-        return Task.FromResult(Search<TQueryData>(query, engineAlias, dataProvider));
+        return await engine!.QueryAsync(query, dataProvider, ct);
     }
 }

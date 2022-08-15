@@ -96,20 +96,55 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         _defaultProvider = defaultProvider;
     }
 
-    ISearchResult<QueryData> ISearchEngine.Query(string query, string? dataProvider)
+    #region Sync
+    public ISearchResult<TQueryData> Query(string query, string? dataProvider = null)
     {
-        var result = Query(query, dataProvider);
-        return new SearchResult<QueryData>{
+        var task = QueryAsync(query, dataProvider);
+        Task.WaitAll(task);
+        return task.Result;
+    }
+    public ISearchResult<TQueryData> Query(Query query, string? dataProvider = null)
+    {
+        var task = QueryAsync(query, dataProvider);
+        Task.WaitAll(task);
+        return task.Result;
+    }
+    ISearchResult ISearchEngine.Query(string query, string? dataProvider)
+    {
+        var res = Query(query, dataProvider);
+        return new SearchResult {
+            Input = res.Input,
+            Total =  res.Total,
+            Content = res.Content.Cast<QueryData>().ToArray()
+        };
+    }
+    ISearchResult ISearchEngine.Query(Query query, string? dataProvider)
+    {
+        var res = Query(query, dataProvider);
+        return new SearchResult {
+            Input = res.Input,
+            Total =  res.Total,
+            Content = res.Content.Cast<QueryData>().ToArray()
+        };
+    }
+    #endregion
+
+
+    #region Async
+    async Task<ISearchResult> ISearchEngine.QueryAsync(string query, string? dataProvider, CancellationToken ct)
+    {
+        var result = await QueryAsync(query, dataProvider, ct);
+        return new SearchResult {
             Input = result.Input,
             Total = result.Total,
 
             Content = result.Content.Cast<QueryData>().ToArray()
         };
     }
-    ISearchResult<QueryData> ISearchEngine.Query(Query query, string? dataProvider)
+    async Task<ISearchResult> ISearchEngine.QueryAsync(Query query, string? dataProvider, CancellationToken ct)
     {
-        var result = Query(query, dataProvider);
-        return new SearchResult<QueryData>{
+        var result = await QueryAsync(query, dataProvider, ct);
+        return new SearchResult {
             Input = result.Input,
             Total = result.Total,
 
@@ -117,14 +152,18 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         };
     }
 
-    public ISearchResult<TQueryData> Query(string query, string? dataProvider = null){
+    public Task<ISearchResult<TQueryData>> QueryAsync(string query, string? dataProvider = null, CancellationToken ct = default){
         var parseResult = QueryParser.Query.TryParse(query);
         if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
+        var parsedQuery = parseResult.Value;
 
-        return Query(parseResult.Value, dataProvider);
+        return QueryAsync(parsedQuery, dataProvider, ct);
     }
-    public ISearchResult<TQueryData> Query(Query query, string? dataProvider = null){
+    public async Task<ISearchResult<TQueryData>> QueryAsync(Query query, string? dataProvider = null, CancellationToken ct = default){
+        Expression<Func<TQueryData, bool>>? queryExpression = null;
+        
         try{
+            ct.ThrowIfCancellationRequested();
             var targetProvider = query.Provider?.ProviderId ?? dataProvider ?? _defaultProvider;
             
             var foundProvider = _dataProviders.TryGetValue(targetProvider, out var provider);
@@ -134,22 +173,46 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
                 query);
             if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{targetProvider}\" not registred");
             
+            ct.ThrowIfCancellationRequested();
+
             if(query.Constraint.HasExpression){
-                var queryLambda = FromQuery(query);
+                queryExpression = FromQuery(query);
                 _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
-                    query, queryLambda.ToString());
-                
-                return provider.Get(query.CommandExpression.Commands, queryLambda);
+                    query, queryExpression.ToString());
             }
 
-            return provider.Get(query.CommandExpression.Commands);
+            ct.ThrowIfCancellationRequested();
+
+            var result = await provider.GetAsync(query.CommandExpression.Commands, queryExpression, ct);
+
+            return new SearchResult<TQueryData>{
+                Input = new SearchInput {
+                    Query = query.ToString(),
+                    EvaluatedExpression = queryExpression?.ToString() ?? string.Empty
+                },
+                Total = result.Count,
+                Content = result.Content
+            };
+        }
+        catch(OperationCanceledException oce) {
+            _logger.LogInformation(oce, "Operation was cancelled via cancellation token");
+            return new SearchResult<TQueryData>{
+                Input = new SearchInput {
+                    Query = query.ToString(),
+                    EvaluatedExpression = queryExpression?.ToString() ?? string.Empty
+                },
+                Total = 0,
+                Content = Array.Empty<TQueryData>()
+            };
         }
         catch(Exception exp){ 
             _logger.LogCritical(exp, "Unexpected error for query [{Query}]", query);
             throw new SearchExpception($"Unexpected error for query [{query}]", exp);
         }
     }
+    #endregion
 
+    #region Expression Composition
     private Expression<Func<TQueryData, bool>> FromQuery(Query query) {
         var queryExpression = query.Constraint.Root switch {
             StringExpression @string => FromExpression(@string),
@@ -214,4 +277,5 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         return LinqExp.Lambda<Func<TQueryData, bool>>(lambdaExpression.Body, 
             $"Directive[{exp.Directive.Type}->{exp.Directive.Identifier}]", lambdaExpression.Parameters);
     }
+    #endregion
 }

@@ -8,7 +8,10 @@ public record Provider(string? EngineAlias, string? ProviderId) : QueryItem {
     public static Provider WithEngine(string engineAlias) => new Provider(engineAlias, null);
     public static Provider WithProvider(string providerId) => new Provider(null, providerId);
 
-    public override string ToString() => $"<{ProviderId}@{EngineAlias}>";
+    public override string ToString() => this switch {
+        { EngineAlias: null, ProviderId: null} => string.Empty,
+        _ => $"<{ProviderId}@{EngineAlias}>"
+    };
 
     public static Query operator +(Provider provider, Constraint constraint) => new Query(provider, CommandExpression.Empty, constraint);
     public static Query operator +(Provider provider, Query query) => new Query(provider, query.CommandExpression, query.Constraint);

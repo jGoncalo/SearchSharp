@@ -12,11 +12,11 @@ public interface ISearchDomain {
 
     ISearchResult Search(string query, string? engineAlias = null, string? dataProvider = null);
     ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null);
-    Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null);
-    Task<ISearchResult> SearchAsync(Query query, string? engineAlias = null, string? dataProvider = null);
+    Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default);
+    Task<ISearchResult> SearchAsync(Query query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default);
 
     ISearchResult<TQueryData> Search<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData;
     ISearchResult<TQueryData> Search<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData;
-    Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData;
-    Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData;
+    Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) where TQueryData : QueryData;
+    Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) where TQueryData : QueryData;
 }
