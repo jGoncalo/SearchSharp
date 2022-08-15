@@ -1,4 +1,4 @@
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace SearchSharp.EntityFramework;

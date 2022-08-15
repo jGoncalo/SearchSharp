@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Engine.Parser.Components;
 
-namespace SearchSharp.Engine.Data;
+namespace SearchSharp.Engine.Providers;
 
 public interface IProvider<TQueryData> 
     where TQueryData : QueryData {

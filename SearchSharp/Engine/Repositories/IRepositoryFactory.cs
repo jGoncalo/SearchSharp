@@ -1,4 +1,4 @@
-namespace SearchSharp.Engine.Data;
+namespace SearchSharp.Engine.Repositories;
 
 public interface IRepositoryFactory<TQueryData, TDataRepo, TDataStructure> 
     where TQueryData : QueryData

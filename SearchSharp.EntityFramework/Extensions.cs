@@ -1,5 +1,5 @@
 using SearchSharp.Engine;
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Providers;
 using Microsoft.EntityFrameworkCore;
 
 namespace SearchSharp.EntityFramework;

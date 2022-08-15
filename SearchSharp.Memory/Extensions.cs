@@ -1,5 +1,5 @@
 using SearchSharp.Engine;
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Providers;
 
 namespace SearchSharp.Memory;
 

@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
-using SearchSharp.Engine;
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Repositories;
 
 namespace SearchSharp.Memory;
 

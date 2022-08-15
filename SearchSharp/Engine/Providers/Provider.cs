@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
-using SearchSharp.Result;
 using SearchSharp.Engine.Commands;
+using SearchSharp.Engine.Repositories;
 using SearchSharp.Exceptions;
 using SearchSharp.Engine.Parser.Components;
 
-namespace SearchSharp.Engine.Data;
+namespace SearchSharp.Engine.Providers;
 
 public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<TQueryData>
     where TQueryData : QueryData 

@@ -7,7 +7,7 @@ namespace SearchSharp.Engine;
 
 using SearchSharp.Exceptions;
 using SearchSharp.Engine.Configuration;
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Providers;
 using SearchSharp.Engine.Parser;
 using SearchSharp.Engine.Evaluation;
 using SearchSharp.Engine.Evaluation.Visitor;

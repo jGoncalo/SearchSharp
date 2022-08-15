@@ -1,6 +1,4 @@
-﻿using SearchSharp.Engine;
-using SearchSharp.Engine.Data;
-using SearchSharp.Exceptions;
+﻿using SearchSharp.Engine.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

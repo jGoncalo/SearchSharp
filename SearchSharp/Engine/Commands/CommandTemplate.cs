@@ -1,4 +1,4 @@
-using SearchSharp.Engine.Data;
+using SearchSharp.Engine.Providers;
 
 namespace SearchSharp.Engine.Commands;
 
