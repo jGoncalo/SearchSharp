@@ -1,3 +1,5 @@
+using SearchSharp.Engine.Parser.Components.Literals;
+using SearchSharp.Engine.Parser.Components.Directives;
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Engine.Parser.Components.Expressions;
 
@@ -138,15 +140,15 @@ public static class QueryParser {
     
     #region Selector
     public static Parser<Provider> ProviderInfo => from left in Parse.Char('<').Named("provider-selector-left")
-        from provider in (from engineAlias in Identifier 
+        from provider in (from provider in Identifier.Named("provider-selector-providerId") 
                             from at in Parse.Char('@') 
-                            from providerSource in Identifier 
-                            select Provider.With(engineAlias, providerSource))
+                            from engine in Identifier.Named("provider-selector-engineAlias")  
+                            select Provider.With(engine, provider))
                         .Or(from at in Parse.Char('@') 
-                            from providerSource in Identifier 
-                            select Provider.WithProvider(providerSource))
-                        .Or(from engineAlias in Identifier 
-                            select Provider.WithEngine(engineAlias))
+                            from engine in Identifier.Named("provider-selector-engineAlias")  
+                            select Provider.WithEngine(engine))
+                        .Or(from provider in Identifier.Named("provider-selector-providerId") 
+                            select Provider.WithProvider(provider))
         from right in Parse.Char('>').Named("provider-selector-right")
         select provider;
     #endregion
@@ -190,18 +192,19 @@ public static class QueryParser {
             select new CommandExpression(command));
     #endregion
 
-    public static Parser<Query> Query => (from expr in LogicExpression select new Query(expr, null))
-        .Or(from str in StringExpression select new Query(str, null));
+    public static Parser<Constraint> Constraint => from expression in (from lExpr in LogicExpression select lExpr as Expression).Or(from sExpr in StringExpression select sExpr as Expression)
+        select new Constraint(expression);
 
-    public static Parser<Query> Search => (from provider in ProviderInfo.Token() 
-        from commandExpr in CommandExpression.Token() 
-        from query in Query 
-        select new Query(query.Root, provider, commandExpr.Commands))
-        .Or(from provider in ProviderInfo.Token()
-            from query in Query
-            select new Query(query.Root, provider, query.Commands))
-        .Or(from commandExpr in CommandExpression
-            from query in Query
-            select new Query(query.Root, query.Provider, commandExpr.Commands))
-        .Or(from query in Query select query);
+    public static Parser<Query> MetaQuery => (from provider in ProviderInfo.Token()
+        from CommandExpression in CommandExpression.Token()
+        select new Query(provider, CommandExpression, Components.Constraint.None))
+        .Or(from provider in ProviderInfo.Token() select new Query(provider, Components.Expressions.CommandExpression.Empty, Components.Constraint.None))
+        .Or(from CommandExpression in CommandExpression.Token() select new Query(Provider.None, CommandExpression, Components.Constraint.None));
+
+    public static Parser<Query> Query => 
+        (from meta in MetaQuery.Token()
+         from constraint in Constraint
+         select new Query(meta.Provider, meta.CommandExpression, constraint))
+        .Or(from meta in MetaQuery.Token() select meta)
+        .Or(from constraint in Constraint select new Query(Provider.None, Components.Expressions.CommandExpression.Empty, constraint));
 }

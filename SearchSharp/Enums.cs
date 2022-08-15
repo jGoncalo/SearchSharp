@@ -14,11 +14,12 @@ public enum LiteralType {
 }
 
 public enum ExpType {
-    String = 0,
-    Directive = 1,
-    Negated = 2,
-    Logic = 3,
-    Command = 4
+    None = 0,
+    String = 1,
+    Directive = 2,
+    Negated = 3,
+    Logic = 4,
+    Command = 5
 }
 
 public enum DirectiveType {

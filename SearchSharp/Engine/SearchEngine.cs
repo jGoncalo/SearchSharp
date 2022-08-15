@@ -1,5 +1,6 @@
 using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Engine.Parser.Components.Expressions;
+using SearchSharp.Engine.Parser.Components.Directives;
 using SearchSharp.Result;
 
 namespace SearchSharp.Engine;
@@ -132,12 +133,16 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
                 foundProvider ? "Found" : "Unknown",
                 query);
             if(!foundProvider || provider == null) throw new SearchExpception($"Data provider \"{targetProvider}\" not registred");
+            
+            if(query.Constraint.HasExpression){
+                var queryLambda = FromQuery(query);
+                _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
+                    query, queryLambda.ToString());
+                
+                return provider.Get(query.CommandExpression.Commands, queryLambda);
+            }
 
-            var queryLambda = FromQuery(query);
-            _logger.LogInformation("From query[{Query}] derived:\n{Expression}",
-                query, queryLambda.ToString());
-
-            return provider.ExecuteQuery(query, queryLambda);
+            return provider.Get(query.CommandExpression.Commands);
         }
         catch(Exception exp){ 
             _logger.LogCritical(exp, "Unexpected error for query [{Query}]", query);
@@ -146,7 +151,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     }
 
     private Expression<Func<TQueryData, bool>> FromQuery(Query query) {
-        var queryExpression = query.Root switch {
+        var queryExpression = query.Constraint.Root switch {
             StringExpression @string => FromExpression(@string),
             LogicExpression compute => FromExpression(compute),
 

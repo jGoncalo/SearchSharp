@@ -1,6 +1,6 @@
 using System.Reflection;
 using SearchSharp.Attributes;
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Literals;
 using SearchSharp.Exceptions;
 
 namespace SearchSharp.Engine.Commands;

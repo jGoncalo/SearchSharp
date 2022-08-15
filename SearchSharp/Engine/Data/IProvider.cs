@@ -10,5 +10,5 @@ public interface IProvider<TQueryData>
     string Name { get; }
 
     IReadOnlyDictionary<string, ICommand<TQueryData>> Commands { get; }
-    ISearchResult<TQueryData> ExecuteQuery(Query query, Expression<Func<TQueryData, bool>> expression);
+    ISearchResult<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression = null);
 }

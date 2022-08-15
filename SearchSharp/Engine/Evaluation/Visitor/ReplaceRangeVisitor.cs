@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Literals;
 
 namespace SearchSharp.Engine.Evaluation.Visitor;
 

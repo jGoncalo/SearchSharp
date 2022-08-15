@@ -1,4 +1,4 @@
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Literals;
 
 namespace SearchSharp.Engine.Commands;
 

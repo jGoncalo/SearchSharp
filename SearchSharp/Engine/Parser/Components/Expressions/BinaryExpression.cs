@@ -1,15 +1,6 @@
 namespace SearchSharp.Engine.Parser.Components.Expressions;
 
-public class BinaryExpression : LogicExpression {
-    public readonly LogicOperator Operator;
-    public readonly LogicExpression Left;
-    public readonly LogicExpression Right;
-
-    public BinaryExpression(LogicOperator logicOperator, LogicExpression left, LogicExpression right) : base(ExpType.Logic) {
-        Operator = logicOperator;
-        Left = left;
-        Right = right;
-    }
+public record BinaryExpression(LogicOperator Operator, LogicExpression Left, LogicExpression Right) : LogicExpression(ExpType.Logic) {
 
     public override string ToString(){
         var opStr = Operator switch {

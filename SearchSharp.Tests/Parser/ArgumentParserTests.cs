@@ -1,5 +1,5 @@
 using SearchSharp.Engine.Parser;
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Literals;
 using Sprache;
 
 namespace SearchSharp.Tests.Parser;

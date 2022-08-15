@@ -1,15 +1,9 @@
+using SearchSharp.Engine.Parser.Components.Literals;
 using SearchSharp.Engine.Parser.Components.Expressions;
 
 namespace SearchSharp.Engine.Parser.Components;
 
-public class Command : QueryItem {
-    public readonly string Identifier;
-    public Arguments Arguments;
-
-    private Command(string identifer, Arguments arguments) {
-        Identifier = identifer;
-        Arguments = arguments;
-    }
+public record Command(string Identifier, Arguments Arguments) : QueryItem {
     
     public static Command NoArgument(string identifier) => new Command(identifier, new Arguments());
     public static Command WithArguments(string identifer, params Literal[] literals) => new Command(identifer, new Arguments(literals));

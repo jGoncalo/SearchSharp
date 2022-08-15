@@ -1,5 +1,3 @@
 namespace SearchSharp.Engine.Parser.Components;
 
-public abstract class QueryItem {
-    
-}
+public abstract record QueryItem;

@@ -1,4 +1,4 @@
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Directives;
 using SearchSharp.Engine.Parser.Components.Expressions;
 
 namespace SearchSharp.Tests.Parser;
@@ -189,7 +189,7 @@ public class ParserTests
                 "<" => DirectiveNumericOperator.Lesser,
                 "<=" => DirectiveNumericOperator.LesserOrEqual,
                 _ => throw new Exception($"Unexpected NumericDirectiveOperator {@operator}")
-            }, result.Value.OperatorType);
+            }, result.Value.Type);
         }
         else Assert.False(result.WasSuccessful);
     }

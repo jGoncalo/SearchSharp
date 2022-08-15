@@ -1,5 +1,5 @@
 using System;
-using SearchSharp.Engine.Parser.Components;
+using SearchSharp.Engine.Parser.Components.Directives;
 
 namespace SearchSharp.Exceptions;
 

@@ -2,20 +2,14 @@ using SearchSharp.Engine.Parser.Components.Expressions;
 
 namespace SearchSharp.Engine.Parser.Components;
 
-public class Query : QueryItem {
-    public readonly Provider? Provider;
-    public readonly Expression Root;
-    public readonly Command[] Commands;
-
-    public Query(Expression root, Provider? provider, params Command[] commands) {
-        Root = root;
-        Provider = provider;
-        Commands = commands ?? Array.Empty<Command>();
-    }
-
+public record Query(Provider Provider, CommandExpression CommandExpression, Constraint Constraint) {
     public override string ToString() => string.Join(' ', new [] { 
-            Provider?.ToString(),
-            string.Join(' ', Commands.Select(cmd => cmd.ToString())),
-            Root.ToString()
+            Provider.ToString(),
+            string.Join(' ', CommandExpression.Commands.Select(cmd => cmd.ToString())),
+            Constraint.ToString()
         }.Where(str => !string.IsNullOrWhiteSpace(str)));
+
+    public static Query operator+(Query query, Provider provider) => new Query(provider, query.CommandExpression, query.Constraint);
+    public static Query operator+(Query query, CommandExpression commandExpression) => new Query(query.Provider, query.CommandExpression + commandExpression, query.Constraint);
+    public static Query operator+(Query query, Constraint constraint) => new Query(query.Provider, query.CommandExpression, constraint);
 }

@@ -1,5 +1,6 @@
 ﻿using SearchSharp.Domain;
-using SearchSharp.Engine;
+using SearchSharp.Engine.Parser.Components.Directives;
+using SearchSharp.Engine.Parser.Components.Literals;
 using SearchSharp.Engine.Commands;
 using SearchSharp.Memory;
 using SearchSharp.Engine.Parser.Components;
@@ -191,7 +192,7 @@ internal class Program
 
                     var expression = platformDir | nameDir;
 
-                    var macroQuery = provider + (commands + expression);
+                    var macroQuery = provider + commands + expression.AsConstraint();
 
                     Console.WriteLine($"\n\nExecuting macro search:\n{macroQuery}");
                     results = searchDomain.Search(macroQuery);

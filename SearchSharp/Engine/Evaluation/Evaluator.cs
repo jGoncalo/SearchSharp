@@ -1,5 +1,6 @@
 using SearchSharp.Engine.Rules;
-using SearchSharp.Engine.Configuration;
+using SearchSharp.Engine.Parser.Components.Literals;
+using SearchSharp.Engine.Parser.Components.Directives;
 using SearchSharp.Exceptions;
 using System.Linq.Expressions;
 using SearchSharp.Engine.Evaluation.Visitor;
@@ -84,15 +85,15 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
 
         switch(directive.Value) {
             case StringLiteral strLit:
-                lambda = rule!.ComparisonStrRules.TryGetValue(directive.OperatorType, out var exactStrRule) ?
+                lambda = rule!.ComparisonStrRules.TryGetValue(directive.Operator, out var exactStrRule) ?
                     ComposeComparison(exactStrRule, strLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             case NumericLiteral numLit:
-                lambda = rule!.ComparisonNumRules.TryGetValue(directive.OperatorType, out var exactNumRule) ?
+                lambda = rule!.ComparisonNumRules.TryGetValue(directive.Operator, out var exactNumRule) ?
                     ComposeComparison(exactNumRule, numLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             case BooleanLiteral boolLit:
-                lambda = rule!.ComparisonBoolRules.TryGetValue(directive.OperatorType, out var exactBoolRule) ?
+                lambda = rule!.ComparisonBoolRules.TryGetValue(directive.Operator, out var exactBoolRule) ?
                     ComposeComparison(exactBoolRule, boolLit) : throw new UnknownRuleDirectiveException(directive);
                 break;
             default:
@@ -106,7 +107,7 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
         if(!hasRule) throw new UnknownRuleException(directive.Identifier);
 
-        var hasOpRule = rule!.NumericRules.TryGetValue(directive.OperatorSpec.OperatorType, out var opRule);
+        var hasOpRule = rule!.NumericRules.TryGetValue(directive.OperatorSpec.Type, out var opRule);
         if(!hasOpRule) throw new UnknownRuleDirectiveException(directive);
 
         return ComposeNumeric(opRule!, directive.OperatorSpec.Value);

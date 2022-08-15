@@ -51,7 +51,13 @@
     | "<@" <id> ">"
     | "<" <id> ">"
 
-<query> ::= <prv> <query>
-    | <cmdExpr> <query>
-    | <strexp>
+<constraint> ::= <strexp>
     | <logicExpr>
+
+<pQuery> ::= <prv> <cmdExpr>
+    | <prv>
+    | <cmdExpr>
+
+<query> ::= <pQuery> <constraint>
+    | <pQuery>
+    | <constraint>

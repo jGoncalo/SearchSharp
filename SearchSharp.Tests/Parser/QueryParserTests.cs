@@ -10,9 +10,9 @@ public class QueryParserTests {
         var result = QueryParser.Query.TryParse("this is a query");
 
         Assert.True(result.WasSuccessful);
-        Assert.IsType<StringExpression>(result.Value.Root);
-        Assert.NotNull(result.Value.Commands);
-        Assert.Empty(result.Value.Commands);
+        Assert.IsType<StringExpression>(result.Value.Constraint.Root);
+        Assert.NotNull(result.Value.CommandExpression.Commands);
+        Assert.Empty(result.Value.CommandExpression.Commands);
     }
 
     [Fact]
@@ -20,9 +20,9 @@ public class QueryParserTests {
         var result = QueryParser.Query.TryParse("users=2 & length[2..]");
 
         Assert.True(result.WasSuccessful);
-        Assert.IsAssignableFrom<LogicExpression>(result.Value.Root);
-        Assert.NotNull(result.Value.Commands);
-        Assert.Empty(result.Value.Commands);
+        Assert.IsAssignableFrom<LogicExpression>(result.Value.Constraint.Root);
+        Assert.NotNull(result.Value.CommandExpression.Commands);
+        Assert.Empty(result.Value.CommandExpression.Commands);
     }
 
     [Theory]
@@ -34,9 +34,9 @@ public class QueryParserTests {
         var result = QueryParser.Query.TryParse(text);
 
         Assert.True(result.WasSuccessful);
-        Assert.IsType<StringExpression>(result.Value.Root);
-        Assert.NotNull(result.Value.Commands);
-        Assert.NotEmpty(result.Value.Commands);
+        Assert.IsType<StringExpression>(result.Value.Constraint.Root);
+        Assert.NotNull(result.Value.CommandExpression.Commands);
+        Assert.NotEmpty(result.Value.CommandExpression.Commands);
     }
 
     [Theory]
@@ -47,9 +47,9 @@ public class QueryParserTests {
         var result = QueryParser.Query.TryParse("#preload #force " + postfix);
 
         Assert.True(result.WasSuccessful);
-        Assert.Equal(expectedRootType, result.Value.Root.Type);
+        Assert.Equal(expectedRootType, result.Value.Constraint.Root.Type);
         
-        Assert.NotNull(result.Value.Commands);
-        Assert.NotEmpty(result.Value.Commands);
+        Assert.NotNull(result.Value.CommandExpression.Commands);
+        Assert.NotEmpty(result.Value.CommandExpression.Commands);
     }
 }

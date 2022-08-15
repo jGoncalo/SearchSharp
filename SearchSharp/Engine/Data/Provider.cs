@@ -70,10 +70,10 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         _commands = commands.ToDictionary(keySelector: cmd => cmd.Identifier, elementSelector: cmd => cmd);
     }
 
-    private TDataStructure ApplyRules(Query query, TDataStructure dataSet, EffectiveIn effectIn){
+    private TDataStructure ApplyRules(Command[] commands, TDataStructure dataSet, EffectiveIn effectIn){
         var affectedSet = dataSet;
 
-        foreach(var command in query.Commands) {
+        foreach(var command in commands) {
             if(_commands.TryGetValue(command.Identifier, out var cmd) && cmd.EffectAt.HasFlag(effectIn)){
                 var arguments = cmd.With(command.Arguments.Literals);
                 try{
@@ -91,12 +91,12 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         return affectedSet;
     }
 
-    public ISearchResult<TQueryData> ExecuteQuery(Query query, Expression<Func<TQueryData, bool>> expression){
+    public ISearchResult<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression = null){
         var repo = (TDataRepository) _repositoryFactory.Instance();
         
-        repo.Modify(dataSet => ApplyRules(query, dataSet, EffectiveIn.Provider));
-        repo.Apply(expression);
-        repo.Modify(dataSet => ApplyRules(query, dataSet, EffectiveIn.Query));
+        repo.Modify(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Provider));
+        if(expression != null) repo.Apply(expression);
+        repo.Modify(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Query));
         
         return new SearchResult<TQueryData>{
             Total = repo.Count(),

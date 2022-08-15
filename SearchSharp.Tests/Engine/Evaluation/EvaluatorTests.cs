@@ -21,7 +21,7 @@ public class EvaluatorTests {
         public bool Is { get; set; } = false;
         public Sorter Sort { get; set; } = Sorter.First;
     }
-
+    /*
     #region String
     [Fact]
     public void Evaluate_String_Replacement(){
@@ -305,4 +305,5 @@ public class EvaluatorTests {
         #endregion
     }
     #endregion
+    */
 }

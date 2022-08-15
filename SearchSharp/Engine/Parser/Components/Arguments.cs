@@ -1,7 +1,9 @@
+using SearchSharp.Engine.Parser.Components.Literals;
+
 namespace SearchSharp.Engine.Parser.Components;
 
-public class Arguments : QueryItem {
-    public readonly Literal[] Literals;
+public record Arguments : QueryItem {
+    public Literal[] Literals { get; init; }
 
     public bool IsStringList => Literals.All(lit => lit.Type == LiteralType.String);
     public bool IsNumericList => Literals.All(lit => lit.Type == LiteralType.Numeric);
