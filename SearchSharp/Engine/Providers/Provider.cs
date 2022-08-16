@@ -60,7 +60,7 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         .ToDictionary(keySelector: kv => kv.Key, elementSelector: kv => kv.Value as ICommand<TQueryData>);
     private readonly IReadOnlyDictionary<string, ICommand<TQueryData, TDataStructure>> _commands;
 
-    private Provider(string name, 
+    public Provider(string name, 
         IRepositoryFactory<TQueryData, TDataRepository, TDataStructure> repositoryFactory,
         params ICommand<TQueryData, TDataStructure>[] commands){
         Name = name;
@@ -116,6 +116,6 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         var content = await repo.FetchAsync(ct);
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
         
-        return new Result<TQueryData>(count, await repo.FetchAsync(ct));
+        return new Result<TQueryData>(count, content);
     }
 }
