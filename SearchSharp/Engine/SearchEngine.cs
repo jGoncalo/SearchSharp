@@ -99,15 +99,11 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     #region Sync
     public ISearchResult<TQueryData> Query(string query, string? dataProvider = null)
     {
-        var task = QueryAsync(query, dataProvider);
-        Task.WaitAll(task);
-        return task.Result;
+        return QueryAsync(query, dataProvider).Await();
     }
     public ISearchResult<TQueryData> Query(Query query, string? dataProvider = null)
     {
-        var task = QueryAsync(query, dataProvider);
-        Task.WaitAll(task);
-        return task.Result;
+        return QueryAsync(query, dataProvider).Await();
     }
     ISearchResult ISearchEngine.Query(string query, string? dataProvider)
     {

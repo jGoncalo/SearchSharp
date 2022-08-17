@@ -16,3 +16,16 @@ public static class Extensions {
     public static BooleanLiteral AsLiteral(this bool value) => new BooleanLiteral(value);
     #endregion
 }
+
+internal static class InternalExtensions {
+    #region Task
+    public static TResult Await<TResult>(this Task<TResult> task) {
+        (task as Task).Await();
+        return task.Result;
+    }
+    public static void Await(this Task task) {
+        Task.WhenAll(task);
+        if(task.IsFaulted && task.Exception is not null) throw (task.Exception as AggregateException).GetBaseException();
+    }
+    #endregion
+}

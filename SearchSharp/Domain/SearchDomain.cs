@@ -63,14 +63,10 @@ public class SearchDomain : ISearchDomain
     }
 
     public ISearchResult Search(string query, string? engineAlias = null, string? dataProvider = null) {
-        var task = SearchAsync(query, engineAlias, dataProvider);
-        Task.WhenAll(task);
-        return task.Result;
+        return SearchAsync(query, engineAlias, dataProvider).Await();
     }
     public ISearchResult Search(Query query, string? engineAlias = null, string? dataProvider = null) {
-        var task = SearchAsync(query, engineAlias, dataProvider);
-        Task.WhenAll(task);
-        return task.Result;
+        return SearchAsync(query, engineAlias, dataProvider).Await();
     }
     public Task<ISearchResult> SearchAsync(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) {
         var parseResult = QueryParser.Query.TryParse(query);
@@ -90,15 +86,11 @@ public class SearchDomain : ISearchDomain
 
     public ISearchResult<TQueryData> Search<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
-        var task = SearchAsync<TQueryData>(query, engineAlias, dataProvider);
-        Task.WaitAll(task);
-        return task.Result;
+        return SearchAsync<TQueryData>(query, engineAlias, dataProvider).Await();
     }
     public ISearchResult<TQueryData> Search<TQueryData>(Query query, string? engineAlias = null, string? dataProvider = null) where TQueryData : QueryData
     {
-        var task = SearchAsync<TQueryData>(query, engineAlias, dataProvider);
-        Task.WaitAll(task);
-        return task.Result;
+        return SearchAsync<TQueryData>(query, engineAlias, dataProvider).Await();
     }
     public Task<ISearchResult<TQueryData>> SearchAsync<TQueryData>(string query, string? engineAlias = null, string? dataProvider = null, CancellationToken ct = default) where TQueryData : QueryData
     {

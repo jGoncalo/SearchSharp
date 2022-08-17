@@ -92,9 +92,7 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
     }
 
     public Result<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression){
-        var task = GetAsync(commands, expression);
-        Task.WhenAll(task);
-        return task.Result;
+        return GetAsync(commands, expression).Await();
     }
 
     public async Task<Result<TQueryData>> GetAsync(Command[] commands, Expression<Func<TQueryData, bool>>? expression,
