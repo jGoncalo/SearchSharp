@@ -238,5 +238,4 @@ public class ProviderTests {
         Assert.Equal("MockException", exception.Message);
         #endregion
     }
-
 }

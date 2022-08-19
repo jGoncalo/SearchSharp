@@ -17,7 +17,7 @@ public class ExclusiveCommand : CommandTemplate<Game, IQueryable<Game>>
         Apple = 7
     }
 
-    [Argument("exclusivity", 0)]
+    [Argument("exclusivity", position: 0)]
     public ExclusiveType Exclusivity { get; set; }
 
     public override IQueryable<Game> Affect(IQueryable<Game> dataSet, EffectiveIn at)
