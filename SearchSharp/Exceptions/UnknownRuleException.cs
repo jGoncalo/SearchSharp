@@ -3,39 +3,52 @@ using SearchSharp.Engine.Parser.Components.Directives;
 
 namespace SearchSharp.Exceptions;
 
+/// <summary>
+/// Thrown when an unknown rule is found in query
+/// </summary>
 public class UnknownRuleException : Exception {
-    protected static string ExpMessage(string identifier) => $"No rule with identifier: \"{identifier}\" found";
+    private static string ExpMessage(string identifier) => $"No rule with identifier: \"{identifier}\" found";
     
+    /// <summary>
+    /// Identifier of unknown command
+    /// </summary>
     public readonly string Identifier;
 
+    /// <summary>
+    /// Thrown when an unknown rule is found in query
+    /// </summary>
+    /// <param name="identifier">Unknown command identifier</param>
     public UnknownRuleException(string identifier) : base(ExpMessage(identifier)) {
         Identifier = identifier;
     }
-    public UnknownRuleException(string identifier, Exception inner) 
-        : base(ExpMessage(identifier), inner) {
-        Identifier = identifier;
 
-    }
-
+    /// <summary>
+    /// Thrown when an unknown rule is found in query
+    /// </summary>
+    /// <param name="identifier">Unknown command identifier</param>
+    /// <param name="message">Exception message</param>
     protected UnknownRuleException(string identifier, string message) : base(message) {
-        Identifier = identifier;
-    }
-    protected UnknownRuleException(string identifier, string message, Exception inner) : base(message, inner) {
         Identifier = identifier;
     }
 }
 
+/// <summary>
+/// Thrown when unknown command directive is found in query
+/// </summary>
 public class UnknownRuleDirectiveException : UnknownRuleException {
-    protected static string ExpMessage(Directive directive) => 
+    private static string ExpMessage(Directive directive) => 
         $"No rule with identifier: \"{directive.Identifier}\" found that can process directive: \"{directive}\"";
 
+    /// <summary>
+    /// Unknown Directive found in query
+    /// </summary>
     public readonly Directive Directive;
 
+    /// <summary>
+    /// Thrown when unknown command directive is found in query
+    /// </summary>
+    /// <param name="directive">Unknown Directive found in query</param>
     public UnknownRuleDirectiveException(Directive directive) : base(directive.Identifier, ExpMessage(directive)) {
-        Directive = directive;
-    }
-
-    public UnknownRuleDirectiveException(Directive directive, Exception inner) : base(directive.Identifier, ExpMessage(directive), inner) {
         Directive = directive;
     }
 }
