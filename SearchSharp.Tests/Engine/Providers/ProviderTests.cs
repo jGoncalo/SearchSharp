@@ -47,7 +47,7 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var results = await provider.GetAsync(Array.Empty<Command>(), null, CancellationToken.None);
+        var results = await provider.GetAsync(null, Array.Empty<Command>(), CancellationToken.None);
         #endregion
 
         #region Assert
@@ -81,10 +81,10 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var results = await provider.GetAsync(new [] {
+        var results = await provider.GetAsync(null, new [] {
             new Command("unknown1", new Arguments(10.AsLiteral())),
             new Command("unknown2", new Arguments(13.AsLiteral())),
-        }, null, CancellationToken.None);
+        }, CancellationToken.None);
         #endregion
 
         #region Assert
@@ -119,10 +119,10 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var results = await provider.GetAsync(new [] {
+        var results = await provider.GetAsync(whereClause, new [] {
             new Command("unknown1", new Arguments(10.AsLiteral())),
             new Command("unknown2", new Arguments(13.AsLiteral())),
-        }, whereClause, CancellationToken.None);
+        }, CancellationToken.None);
         #endregion
 
         #region Assert
@@ -170,10 +170,10 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var exception = await Assert.ThrowsAsync<Exception>(() => provider.GetAsync(new [] {
+        var exception = await Assert.ThrowsAsync<Exception>(() => provider.GetAsync(whereClause, new [] {
             new Command("unknown1", new Arguments(10.AsLiteral())),
             new Command("unknown2", new Arguments(13.AsLiteral())),
-        }, whereClause, CancellationToken.None));
+        }, CancellationToken.None));
         #endregion
 
         #region Assert
@@ -198,10 +198,10 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var exception = await Assert.ThrowsAsync<Exception>(() => provider.GetAsync(new [] {
+        var exception = await Assert.ThrowsAsync<Exception>(() => provider.GetAsync(whereClause, new [] {
             new Command("unknown1", new Arguments(10.AsLiteral())),
             new Command("unknown2", new Arguments(13.AsLiteral())),
-        }, whereClause, CancellationToken.None));
+        }, CancellationToken.None));
         #endregion
 
         #region Assert
@@ -226,10 +226,10 @@ public class ProviderTests {
         #endregion
 
         #region Act
-        var exception = Assert.Throws<Exception>(() => provider.Get(new [] {
+        var exception = Assert.Throws<Exception>(() => provider.Get(whereClause, new [] {
             new Command("unknown1", new Arguments(10.AsLiteral())),
             new Command("unknown2", new Arguments(13.AsLiteral())),
-        }, whereClause));
+        }));
         #endregion
 
         #region Assert

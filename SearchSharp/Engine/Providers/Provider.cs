@@ -56,6 +56,15 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
 
     private readonly IRepositoryFactory<TQueryData, TDataRepository, TDataStructure> _repositoryFactory;
 
+    public ICommand<TQueryData> this[string identifier] {
+        get => _commands[identifier] as ICommand<TQueryData>;
+    }
+    public bool TryGet(string identifier, out ICommand<TQueryData>? command){
+        var hasCommand = _commands.TryGetValue(identifier, out var targetCommand);
+        command = targetCommand as ICommand<TQueryData>;
+        return hasCommand;
+    }
+
     public IReadOnlyDictionary<string, ICommand<TQueryData>> Commands => _commands
         .ToDictionary(keySelector: kv => kv.Key, elementSelector: kv => kv.Value as ICommand<TQueryData>);
     private readonly IReadOnlyDictionary<string, ICommand<TQueryData, TDataStructure>> _commands;
@@ -91,11 +100,12 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
         return affectedSet;
     }
 
-    public Result<TQueryData> Get(Command[] commands, Expression<Func<TQueryData, bool>>? expression){
-        return GetAsync(commands, expression).Await();
+    public Result<TQueryData> Get(Expression<Func<TQueryData, bool>>? expression, params Command[] commands){
+        return GetAsync(expression, commands).Await();
     }
 
-    public async Task<Result<TQueryData>> GetAsync(Command[] commands, Expression<Func<TQueryData, bool>>? expression,
+    public async Task<Result<TQueryData>> GetAsync(Expression<Func<TQueryData, bool>>? expression,
+        Command[]? commands = null, 
         CancellationToken ct = default){
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
 
@@ -104,11 +114,11 @@ public class Provider<TQueryData, TDataRepository, TDataStructure> : IProvider<T
 
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
         
-        await repo.ModifyAsync(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Provider), ct);
+        await repo.ModifyAsync(dataSet => ApplyRules(commands ?? Array.Empty<Command>(), dataSet, EffectiveIn.Provider), ct);
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
         if(expression != null) await repo.ApplyAsync(expression, ct);
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
-        await repo.ModifyAsync(dataSet => ApplyRules(commands, dataSet, EffectiveIn.Query), ct);
+        await repo.ModifyAsync(dataSet => ApplyRules(commands ?? Array.Empty<Command>(), dataSet, EffectiveIn.Query), ct);
         if(ct.IsCancellationRequested) return Result<TQueryData>.Empty;
 
         var content = await repo.FetchAsync(ct);

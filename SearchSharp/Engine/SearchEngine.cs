@@ -179,7 +179,7 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
             ct.ThrowIfCancellationRequested();
 
-            var result = await provider.GetAsync(query.CommandExpression.Commands, queryExpression, ct);
+            var result = await provider.GetAsync(queryExpression, query.CommandExpression.Commands, ct);
 
             return new SearchResult<TQueryData>{
                 Input = new SearchInput {
