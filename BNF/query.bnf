@@ -16,6 +16,13 @@
 <args> ::= <args> "," <lit>
 	| <lit>
 
+<numList> ::= <numList> "," <num>
+    | <num>
+<strList> ::= <strList> "," <str>
+    | <str>
+<boolList> ::= <boolList> "," <bool>
+    | <bool>
+
 <cmd> ::= "#" <id> "(" <args> ")"
     | "#" <id> "()"
 	| "#" <id>
@@ -27,7 +34,7 @@
 <dirRangeOp> ::= "[" <num> ".." <num> "]"
 	| "[" <num> "..]"
     | "[.." <num> "]"
-<dirListOp> ::= "[" <args> "]";
+<dirListOp> ::= "[" (<numList> | <strList> | <boolList>) "]"
 <dir> ::= <id> <dirOp> (<str> | <num> | <bool>)
     | <id> <dirNumbOp>
     | <id> <dirRangeOp>

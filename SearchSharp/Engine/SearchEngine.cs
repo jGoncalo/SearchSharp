@@ -18,24 +18,44 @@ using Microsoft.Extensions.Logging;
 using LinqExp = System.Linq.Expressions.Expression;
 using SearchExp = Expression;
 
+/// <summary>
+/// Obtain targeted results from a given repository, based on a query string
+/// </summary>
 public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     where TQueryData : QueryData {
+    /// <summary>
+    /// Search Engine builder
+    /// </summary>
     public class Builder {
         private readonly string _alias;
         private IConfig<TQueryData> _config;
         private Dictionary<string, IProvider<TQueryData>> _dataProviders = new Dictionary<string, IProvider<TQueryData>>();
         private string _defaultProvider = string.Empty;
 
+        /// <summary>
+        /// Create a search engine builder
+        /// </summary>
+        /// <param name="alias">Search engine unique alias</param>
         public Builder(string alias){
             _alias = alias;
             _config = new Config<TQueryData>.Builder().Build();
         }
 
         #region Configuration
+        /// <summary>
+        /// Search Engine configuration
+        /// </summary>
+        /// <param name="config">Configuration</param>
+        /// <returns>This builder</returns>
         public Builder With(IConfig<TQueryData> config) {
             _config = config;
             return this;
         }
+        /// <summary>
+        /// Search engine configuration
+        /// </summary>
+        /// <param name="configuration">Action to configure with builder</param>
+        /// <returns>This builder</returns>
         public Builder With(Action<Config<TQueryData>.Builder> configuration){
             var builder = new Config<TQueryData>.Builder();
             configuration(builder);
@@ -45,36 +65,68 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         #endregion
 
         #region Providers
+        /// <summary>
+        /// Register a provider
+        /// </summary>
+        /// <param name="provider">Provider</param>
+        /// <param name="isDefault">if this provider is new default</param>
+        /// <returns>This builder</returns>
         public Builder RegisterProvider(IProvider<TQueryData> provider, bool isDefault = false){
             _dataProviders[provider.Name] = provider;
 
             if(string.IsNullOrWhiteSpace(_defaultProvider) || isDefault) _defaultProvider = provider.Name;
             return this;
         }
+        /// <summary>
+        /// Remove Provider
+        /// </summary>
+        /// <param name="providerName">Unique provider name</param>
+        /// <returns>This builder</returns>
         public Builder RemoveProvider(string providerName) {
             var contains = _dataProviders.ContainsKey(providerName);
             if(contains) _dataProviders.Remove(providerName);
             return this;
         }
+        /// <summary>
+        /// Remove all providers
+        /// </summary>
+        /// <returns>This builder</returns>
         public Builder ClearProviders(){
             _dataProviders.Clear();
             return this;
         }
         
+        /// <summary>
+        /// Set default builder
+        /// </summary>
+        /// <param name="providerName">Unique provider name</param>
+        /// <returns>This builder</returns>
+        /// <exception cref="ArgumentException">If no provider exists with unique name</exception>
         public Builder SetDefaultProvider(string providerName) {
             if(!_dataProviders.ContainsKey(providerName)) throw new ArgumentException($"Unknown provider - {providerName}", nameof(providerName));
             _defaultProvider = providerName;
             return this;
         }
         #endregion
-
+        
+        /// <summary>
+        /// Build a Search Engine
+        /// </summary>
+        /// <returns>Search engine</returns>
+        /// <exception cref="BuildException">No provider registered</exception>
         public SearchEngine<TQueryData> Build() {
             if(_dataProviders.Values.Count() == 0) throw new BuildException("At least one data provider must be registered");
             return new SearchEngine<TQueryData>(_alias, _config, _dataProviders, _defaultProvider);
         }
     }
 
+    /// <summary>
+    /// Type of data returned by queries
+    /// </summary>
     public Type DataType { get; }
+    /// <summary>
+    /// Engine alias, used to uniquely identify an engine
+    /// </summary>
     public String Alias { get; }
 
     private readonly IConfig<TQueryData> _config;
@@ -97,10 +149,19 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
     }
 
     #region Sync
+    /// <summary>
+    /// Engine alias, used to uniquely identify an engine
+    /// </summary>
     public ISearchResult<TQueryData> Query(string query, string? dataProvider = null)
     {
         return QueryAsync(query, dataProvider).Await();
     }
+    /// <summary>
+    /// Obtain data when applying a query constraint to a repository
+    /// </summary>
+    /// <param name="query">query record</param>
+    /// <param name="dataProvider">targeted data provider</param>
+    /// <returns>Matching data</returns>
     public ISearchResult<TQueryData> Query(Query query, string? dataProvider = null)
     {
         return QueryAsync(query, dataProvider).Await();
@@ -127,6 +188,13 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
 
     #region Async
+    /// <summary>
+    /// Obtain data when applying a query constraint to a repository
+    /// </summary>
+    /// <param name="query">query string</param>
+    /// <param name="dataProvider">targeted data provider</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Matching data</returns>
     async Task<ISearchResult> ISearchEngine.QueryAsync(string query, string? dataProvider, CancellationToken ct)
     {
         var result = await QueryAsync(query, dataProvider, ct);
@@ -137,6 +205,13 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
             Content = result.Content.Cast<QueryData>().ToArray()
         };
     }
+    /// <summary>
+    /// Obtain data when applying a query constraint to a repository
+    /// </summary>
+    /// <param name="query">query string</param>
+    /// <param name="dataProvider">targeted data provider</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Matching data</returns>
     async Task<ISearchResult> ISearchEngine.QueryAsync(Query query, string? dataProvider, CancellationToken ct)
     {
         var result = await QueryAsync(query, dataProvider, ct);
@@ -148,6 +223,13 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
         };
     }
 
+    /// <summary>
+    /// Obtain data when applying a query constraint to a repository
+    /// </summary>
+    /// <param name="query">query string</param>
+    /// <param name="dataProvider">targeted data provider</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Matching data</returns>
     public Task<ISearchResult<TQueryData>> QueryAsync(string query, string? dataProvider = null, CancellationToken ct = default){
         var parseResult = QueryParser.Query.TryParse(query);
         if(!parseResult.WasSuccessful) throw new SearchExpception(parseResult.Message);
@@ -155,6 +237,13 @@ public class SearchEngine<TQueryData> : ISearchEngine<TQueryData>
 
         return QueryAsync(parsedQuery, dataProvider, ct);
     }
+    /// <summary>
+    /// Obtain data when applying a query constraint to a repository
+    /// </summary>
+    /// <param name="query">query string</param>
+    /// <param name="dataProvider">targeted data provider</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Matching data</returns>
     public async Task<ISearchResult<TQueryData>> QueryAsync(Query query, string? dataProvider = null, CancellationToken ct = default){
         Expression<Func<TQueryData, bool>>? queryExpression = null;
         

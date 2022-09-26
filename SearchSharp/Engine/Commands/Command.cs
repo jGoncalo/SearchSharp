@@ -6,11 +6,22 @@ using SearchSharp.Engine.Converters;
 
 namespace SearchSharp.Engine.Commands;
 
+/// <summary>
+/// Command specification
+/// </summary>
+/// <typeparam name="TQueryData">Data type associated with the command</typeparam>
+/// <typeparam name="TDataStructure">Data structure associated with the command</typeparam>
 public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStructure> 
     where TQueryData : QueryData
     where TDataStructure : class {
+    /// <summary>
+    /// Command specification builder
+    /// </summary>
     public class Builder
     {
+        /// <summary>
+        /// Unique command identifier
+        /// </summary>
         public readonly string Identifier;
         private EffectiveIn _effectiveIn = EffectiveIn.None;
         private readonly List<ArgumentDeclaration> _arguments = new();
@@ -20,12 +31,29 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
             Identifier = identifier;
         }
 
+        /// <summary>
+        /// Create a command builder for a given identifier
+        /// </summary>
+        /// <param name="identifier">Unique command identifier</param>
+        /// <returns>Command Builder</returns>
         public static Builder For(string identifier) => new Builder(identifier);
 
+        /// <summary>
+        /// Set when the command will take effect
+        /// </summary>
+        /// <param name="effectiveIn">When the command will take effect</param>
+        /// <returns>This builder</returns>
         public Builder SetRuntime(EffectiveIn effectiveIn) {
             _effectiveIn = effectiveIn;
             return this;
         }
+        /// <summary>
+        /// Register an argument for the command
+        /// </summary>
+        /// <typeparam name="TLiteral">Type of argument</typeparam>
+        /// <param name="identifier">Unique argument identifier</param>
+        /// <returns>This Builder</returns>
+        /// <exception cref="SearchExpception">If literal type is unregistered</exception>
         public Builder AddArgument<TLiteral>(string identifier) where TLiteral : Literal {
             LiteralType type;
             if (typeof(TLiteral) == typeof(BooleanLiteral)) type = LiteralType.Boolean;
@@ -37,17 +65,31 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
             return this;
         }
 
+        /// <summary>
+        /// Set the effect of the command
+        /// </summary>
+        /// <param name="effect">What effect command will have</param>
+        /// <returns>This builder</returns>
         public Builder SetEffect(Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect) {
             _effect = effect;
             return this;
         }
 
+        /// <summary>
+        /// Reset the command effect
+        /// (no effect is default)
+        /// </summary>
+        /// <returns>This builder</returns>
         public Builder ResetEffect()
         {
             _effect = arg => arg.DataSet;
             return this;
         }
 
+        /// <summary>
+        /// Build command
+        /// </summary>
+        /// <returns>Command Specification</returns>
         public Command<TQueryData, TDataStructure> Build() {
             var argForm = new HashSet<string>();
             var argList = new List<ArgumentDeclaration>();
@@ -64,11 +106,30 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
         }
     }
 
+    /// <summary>
+    /// Unique command identifier
+    /// </summary>
     public string Identifier { get; }
+    /// <summary>
+    /// When will a command be executed
+    /// </summary>
     public EffectiveIn EffectAt { get; }
+    /// <summary>
+    /// Arguments expected for this command specification
+    /// </summary>
     public ArgumentDeclaration[] Arguments { get; }
+    /// <summary>
+    /// What effect the command will have on a given Data structure when applied
+    /// </summary>
     public Func<Parameters<TQueryData, TDataStructure>, TDataStructure> Effect { get; }
 
+    /// <summary>
+    /// Create a command specification
+    /// </summary>
+    /// <param name="identifier">Unique command identifier</param>
+    /// <param name="effectAt">When the command will execute</param>
+    /// <param name="effect">What is the command effect</param>
+    /// <param name="arguments">Expected argument declaration</param>
     protected Command(string identifier, EffectiveIn effectAt, Func<Parameters<TQueryData, TDataStructure>, TDataStructure> effect, params ArgumentDeclaration[] arguments) {
         Identifier = identifier;
         EffectAt = effectAt;
@@ -76,6 +137,12 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
         Arguments = arguments ?? Array.Empty<ArgumentDeclaration>();
     }
 
+    /// <summary>
+    /// Create the argument list for a given command
+    /// </summary>
+    /// <param name="literals">Literals to attempt match on command execution</param>
+    /// <returns>Arguments</returns>
+    /// <exception cref="ArgumentResolutionException">If literals do not match expected argument declaration</exception>
     public Argument[] With(params Literal[] literals){
         var expectedArgumentCount = Arguments.Length;
         var receivedArgumentCount = literals.Length;
@@ -97,6 +164,12 @@ public class Command<TQueryData, TDataStructure> : ICommand<TQueryData, TDataStr
     }
 }
 
+/// <summary>
+/// Command specification generated by a given Command Template class
+/// </summary>
+/// <typeparam name="TQueryData">Data type associated with the command</typeparam>
+/// <typeparam name="TDataStructure">Data structure associated with the command</typeparam>
+/// <typeparam name="TCommandSpec">Command Template class</typeparam>
 public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryData, TDataStructure>
     where TQueryData : QueryData
     where TDataStructure : class
@@ -195,6 +268,9 @@ public class Command<TQueryData, TDataStructure, TCommandSpec> : Command<TQueryD
         return spec.Affect(args.DataSet, args.AffectAt);
     }
 
+    /// <summary>
+    /// Create a new Command based on the specified Command Template
+    /// </summary>
     public Command() : base(GetIdentifier(), GetEffectiveIn(), Affect, GetArguments()) {
 
     }

@@ -5,6 +5,8 @@ using SearchSharp.Engine.Parser.Components;
 using SearchSharp.Engine.Rules;
 using Moq;
 using SearchSharp.Tests.Support;
+using SearchSharp.Engine.Parser.Components.Literals;
+using SearchSharp.Engine.Parser.Components.Directives;
 
 namespace SearchSharp.Tests.Engine.Evaluation;
 
@@ -21,13 +23,13 @@ public class EvaluatorTests {
         public bool Is { get; set; } = false;
         public Sorter Sort { get; set; } = Sorter.First;
     }
-    /*
+    
     #region String
     [Fact]
     public void Evaluate_String_Replacement(){
         #region Assemble
         Expression<Func<DummyData, bool>> expected = (d) => d.Info == "replacement";
-        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => d.Info == str, d => true);
+        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => d.Info == str);
         #endregion
 
         #region Act
@@ -48,7 +50,7 @@ public class EvaluatorTests {
     public void Evaluate_String_MethodCall(){
         #region Assemble
         Expression<Func<DummyData, bool>> expected = (d) => d.Info.Length == "replacement".Length;
-        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => d.Info.Length == str.Length, d => true);
+        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => d.Info.Length == str.Length);
         #endregion
 
         #region Act
@@ -70,93 +72,94 @@ public class EvaluatorTests {
     [Fact]
     public void Evaluate_Comparison_UnkownRule(){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
-        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => true, defaultExpression);
+        var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>(), (d, str) => true);
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new ComparisonDirective(DirectiveComparisonOperator.Rule, "unknown", NumericLiteral.Int(10)));
+        var exception = Assert.Throws<UnknownRuleException>(() => evaluator.Evaluate(new ComparisonDirective(DirectiveComparisonOperator.Rule, "unknown", NumericLiteral.Int(10))));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("unknown",exception.Identifier);
         #endregion
     }
     [Theory]
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_String_UnkownOperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, StringLiteral, bool>>? outExpr = (d,s) => true;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonStrRules.TryGetValue(operatorType, out outExpr)  == false);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>{
             { "unknown", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new ComparisonDirective(operatorType, "unknown", "something".AsLiteral()));
+        var directive = new ComparisonDirective(operatorType, "unknown", "something".AsLiteral());
+        var exception = Assert.Throws<UnknownRuleDirectiveException>(() => evaluator.Evaluate(directive));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("unknown",exception.Identifier);
+        Assert.Equal(directive, exception.Directive);
         #endregion
     }
     [Theory]
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_Numeric_UnkownOperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, NumericLiteral, bool>>? outExpr = (d,s) => true;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonNumRules.TryGetValue(operatorType, out outExpr)  == false);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>{
             { "unknown", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new ComparisonDirective(operatorType, "unknown", 10.AsLiteral()));
+        var directive = new ComparisonDirective(operatorType, "unknown", 10.AsLiteral());
+        var exception = Assert.Throws<UnknownRuleDirectiveException>(() => evaluator.Evaluate(directive));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("unknown",exception.Identifier);
+        Assert.Equal(directive, exception.Directive);
         #endregion
     }
     [Theory]
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_Boolean_UnkownOperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, BooleanLiteral, bool>>? outExpr = (d,s) => true;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonBoolRules.TryGetValue(operatorType, out outExpr)  == false);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>>{
             { "unknown", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
-        var evaluated = evaluator.Evaluate(new ComparisonDirective(operatorType, "unknown", false.AsLiteral()));
+        var directive = new ComparisonDirective(operatorType, "unknown", false.AsLiteral());
+        var exception = Assert.Throws<UnknownRuleDirectiveException>(() => evaluator.Evaluate(directive));
         #endregion
 
         #region Assert
-        Assert.Equal(defaultExpression.ToString(), evaluated.ToString());
+        Assert.Equal("unknown",exception.Identifier);
+        Assert.Equal(directive, exception.Directive);
         #endregion
     }
     [Theory]
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_String_OperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, StringLiteral, bool>>? outExpr = (d,str) => false;
         Expression<Func<DummyData, bool>> expected = (d) => false;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonStrRules.TryGetValue(operatorType, out outExpr)  == true);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>> {
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
@@ -171,14 +174,13 @@ public class EvaluatorTests {
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_Numeric_OperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, NumericLiteral, bool>>? outExpr = (d,str) => false;
         Expression<Func<DummyData, bool>> expected = (d) => false;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonNumRules.TryGetValue(operatorType, out outExpr)  == true);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>> {
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
@@ -193,14 +195,13 @@ public class EvaluatorTests {
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_Boolean_OperatorType(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, BooleanLiteral, bool>>? outExpr = (d,str) => false;
         Expression<Func<DummyData, bool>> expected = (d) => false;
         var mockRule = Mock.Of<IRule<DummyData>>(rule => rule.ComparisonBoolRules.TryGetValue(operatorType, out outExpr)  == true);
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>> {
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
@@ -216,7 +217,6 @@ public class EvaluatorTests {
     [ClassData(typeof(EnumClassData<DirectiveComparisonOperator>))]
     public void Evaluate_Comparison_Replacement(DirectiveComparisonOperator operatorType){
         #region Assemble
-        Expression<Func<DummyData, bool>> defaultExpression = (d) => true;
         Expression<Func<DummyData, StringLiteral, bool>>? outStrExpr = (d,str) => d.Info == str.Value;
         Expression<Func<DummyData, NumericLiteral, bool>>? outNumExpr = (d,num) => d.Integer == num.AsInt;
         Expression<Func<DummyData, BooleanLiteral, bool>>? outBoolExpr = (d,@bool) => d.Is && @bool.Value;
@@ -229,7 +229,7 @@ public class EvaluatorTests {
 
         var evaluator = new Evaluator<DummyData>(new Dictionary<string, IRule<DummyData>> {
             { "known", mockRule }
-        }, (d, str) => true, defaultExpression);
+        }, (d, str) => true);
         #endregion
 
         #region Act
@@ -305,5 +305,4 @@ public class EvaluatorTests {
         #endregion
     }
     #endregion
-    */
 }

@@ -8,10 +8,19 @@ using SearchSharp.Engine.Parser.Components;
 
 namespace SearchSharp.Engine.Evaluation;
 
+/// <summary>
+/// Evaluate a given directive into a simple expression
+/// </summary>
+/// <typeparam name="TQueryData">Data type</typeparam>
 public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : QueryData {
     private IReadOnlyDictionary<string, IRule<TQueryData>> Rules { get; }
     private Expression<Func<TQueryData, string, bool>> StringRule { get; }
 
+    /// <summary>
+    /// Create an evaluator
+    /// </summary>
+    /// <param name="rules">rule definitions to be replaced on evaluation</param>
+    /// <param name="stringRule">string rule definition to be replaced on evaluation</param>
     public Evaluator(IReadOnlyDictionary<string, IRule<TQueryData>> rules, 
         Expression<Func<TQueryData, string, bool>> stringRule) {
         Rules = rules;
@@ -76,6 +85,11 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
     }
     #endregion 
 
+    /// <summary>
+    /// Evaluate directive into common expression
+    /// </summary>
+    /// <param name="directive">Directive specification</param>
+    /// <returns>Common expression</returns>
     public Expression<Func<TQueryData, bool>> Evaluate(ComparisonDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
         
@@ -102,6 +116,11 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
 
         return lambda;
     }
+    /// <summary>
+    /// Evaluate directive into common expression
+    /// </summary>
+    /// <param name="directive">Directive specification</param>
+    /// <returns>Common expression</returns>
     public Expression<Func<TQueryData, bool>> Evaluate(NumericDirective directive) {
 
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
@@ -112,6 +131,11 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
 
         return ComposeNumeric(opRule!, directive.OperatorSpec.Value);
     }
+    /// <summary>
+    /// Evaluate directive into common expression
+    /// </summary>
+    /// <param name="directive">Directive specification</param>
+    /// <returns>Common expression</returns>
     public Expression<Func<TQueryData, bool>> Evaluate(RangeDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
         if(!hasRule) throw new UnknownRuleException(directive.Identifier);
@@ -121,6 +145,11 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
 
         return ComposeRange(rangeRule, directive.OperatorSpec.LowerBound, directive.OperatorSpec.UpperBound);
     }
+    /// <summary>
+    /// Evaluate directive into common expression
+    /// </summary>
+    /// <param name="directive">Directive specification</param>
+    /// <returns>Common expression</returns>
     public Expression<Func<TQueryData, bool>> Evaluate(ListDirective directive) {
         var hasRule = Rules.TryGetValue(directive.Identifier, out var rule);
         if(!hasRule) throw new UnknownRuleException(directive.Identifier);
@@ -139,6 +168,11 @@ public class Evaluator<TQueryData> : IEvaluator<TQueryData> where TQueryData : Q
 
         throw new UnknownRuleDirectiveException(directive);
     }
+    /// <summary>
+    /// Evaluate text into common expression
+    /// </summary>
+    /// <param name="textQuery">generic text</param>
+    /// <returns>Common expression</returns>
     public Expression<Func<TQueryData, bool>> Evaluate(string textQuery) {
         return ComposeText(StringRule, textQuery);
     }
