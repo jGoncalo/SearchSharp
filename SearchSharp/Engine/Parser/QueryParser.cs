@@ -53,13 +53,21 @@ public static class QueryParser {
         from trailing in Parse.CharExcept("&|^><=. \t\n[](){}:~@").Many().Text()
         select leading + trailing;
     /// <summary>
+    /// Parse an escaped charracter
+    /// </summary>
+    public static Parser<string> EscapedString => (from escape in Parse.Char('\\').Once().Text()
+        from escapped in Parse.AnyChar.Once().Text()
+        select escape + escapped);
+    /// <summary>
     /// Parse a string into a DQL String
     /// </summary>
     public static Parser<StringLiteral> String => (from empty in Parse.String("\"\"").Text().Named("string-empty") select new StringLiteral(string.Empty))
         .Or(from leading in Parse.Char('"').Once().Named("string-start")
-            from content in Parse.CharExcept('"').AtLeastOnce().Text().Named("string-content")
+            from content in ((from escaped in EscapedString select escaped))
+                           .Or(from ctn in Parse.CharExcept('"') select $"{ctn}")
+                           .AtLeastOnce().Named("string-content")
             from trailing in Parse.Char('"').Once().Named("string-end")
-            select new StringLiteral(content));
+            select new StringLiteral(content.Aggregate((val, acumulator) => val + acumulator)));
     #endregion
 
     #region LogicOperator

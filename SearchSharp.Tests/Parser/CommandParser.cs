@@ -31,6 +31,8 @@ public class CommandParser {
     [InlineData("#cmd(12,\"some\")", 2)]
     [InlineData("#cmd(\"some\", 33)", 2)]
     [InlineData("#cmd(\"some\", \"some\")", 2)]
+    [InlineData("#cmd(\"some\", True)", 2)]
+    [InlineData("#cmd(\"some\", 12, True)", 3)]
     public void CanHandle_Args(string value, int argCount){
         var result = QueryParser.CommandParser.TryParse(value);
 

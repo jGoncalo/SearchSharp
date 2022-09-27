@@ -11,15 +11,5 @@ public record BinaryExpression(LogicOperator Operator, LogicExpression Left, Log
     /// To string with DQL syntax
     /// </summary>
     /// <returns>String value</returns>
-    public override string ToString(){
-        var opStr = Operator switch {
-            LogicOperator.And => "&",
-            LogicOperator.Or => "|",
-            LogicOperator.Xor => "^",
-
-            _ => Operator.ToString()
-        };
-
-        return $"({Left.ToString()} {opStr} {Right.ToString()})";
-    }
+    public override string ToString() => $"({Left.ToString()} {Operator.AsOp()} {Right.ToString()})";
 }

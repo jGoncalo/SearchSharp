@@ -18,14 +18,7 @@ public record NumericDirective(NumericDirective.Operator OperatorSpec, string Id
         /// To string with DQL syntax
         /// </summary>
         /// <returns>String value</returns>
-        public override string ToString() => Type switch {
-            DirectiveNumericOperator.Greater => ">",
-            DirectiveNumericOperator.GreaterOrEqual => ">=",
-            DirectiveNumericOperator.LesserOrEqual => "<=",
-            DirectiveNumericOperator.Lesser => "<",
-
-            _ => Type.ToString()
-        } + Value.ToString();
+        public override string ToString() => Type.AsOp() + Value.ToString();
     }
 
     /// <summary>

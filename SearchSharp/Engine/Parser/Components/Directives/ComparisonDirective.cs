@@ -15,15 +15,5 @@ public record ComparisonDirective(DirectiveComparisonOperator Operator, string I
     /// To string with DQL syntax
     /// </summary>
     /// <returns>String value</returns>
-    public override string ToString() {
-        var opStr = Operator switch {
-            DirectiveComparisonOperator.Rule => ":",
-            DirectiveComparisonOperator.Equal => "=",
-            DirectiveComparisonOperator.Similar => "~",
-
-            _ => Operator.ToString()
-        };
-
-        return Identifier + opStr + Value.ToString();
-    }
+    public override string ToString() => Identifier + Operator.AsOp() + Value.ToString();
 }

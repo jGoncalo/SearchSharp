@@ -54,6 +54,49 @@ public static class Extensions {
     /// <returns>Numeric Literal representation</returns>
     public static BooleanLiteral AsLiteral(this bool value) => new BooleanLiteral(value);
     #endregion
+
+    #region Operators
+    /// <summary>
+    /// Operator as string used in DQL syntax
+    /// </summary>
+    /// <param name="operator">Comparison directive operator</param>
+    /// <returns>DQL string for operator</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When enumerate value is not recognized</exception>
+    public static string AsOp(this DirectiveComparisonOperator @operator) => @operator switch {
+        DirectiveComparisonOperator.Equal => "=",
+        DirectiveComparisonOperator.Rule => ":",
+        DirectiveComparisonOperator.Similar => "~",
+
+        _ => throw new ArgumentOutOfRangeException(nameof(@operator))
+    };
+    /// <summary>
+    /// Operator as string used in DQL syntax
+    /// </summary>
+    /// <param name="operator">Numeric directive operator</param>
+    /// <returns>DQL string for operator</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When enumerate value is not recognized</exception>
+    public static string AsOp(this DirectiveNumericOperator @operator) => @operator switch {
+        DirectiveNumericOperator.GreaterOrEqual => ">=",
+        DirectiveNumericOperator.Greater => ">",
+        DirectiveNumericOperator.Lesser => "<",
+        DirectiveNumericOperator.LesserOrEqual => "<=",
+
+        _ => throw new ArgumentOutOfRangeException(nameof(@operator))
+    };
+    /// <summary>
+    /// Operator as string used in DQL syntax
+    /// </summary>
+    /// <param name="operator">Logic operator</param>
+    /// <returns>DQL string for operator</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When enumerate value is not recognized</exception>
+    public static string AsOp(this LogicOperator @operator) => @operator switch{
+        LogicOperator.And => "&",
+        LogicOperator.Or => "|",
+        LogicOperator.Xor => "^",
+
+        _ => throw new ArgumentOutOfRangeException(nameof(@operator))
+    };
+    #endregion
 }
 
 internal static class InternalExtensions {
